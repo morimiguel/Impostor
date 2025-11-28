@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Impostor Enterprise</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#09090b">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Embedded Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSW1wb3N0b3IiLCJzaG9ydF9uYW1lIjoiSW1wb3N0b3IiLCJzdGFydF91cmwiOiIuIiwic2NvcGUiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzA5MDkwYiIsInRoZW1lX2NvbG9yIjoiIzA5MDkwYiIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2ltZy5pY29uczguY29tL2ZsdWVuY3kvOTYvbnVsbC9hbm9ueW1vdXMtbWFzay5wbmciLCJzaXplcyI6Ijk2eDk2IiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'SF Pro Display', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    colors: {
+                        background: '#09090b', // Zinc 950
+                        surface: '#18181b',    // Zinc 900
+                        surfaceHover: '#27272a', // Zinc 800
+                        border: '#27272a',     // Zinc 800
+                        primary: {
+                            DEFAULT: '#7c3aed', // Violet 600
+                            hover: '#6d28d9',   // Violet 700
+                            glow: 'rgba(124, 58, 237, 0.5)'
+                        },
+                        danger: {
+                            DEFAULT: '#ef4444',
+                            glow: 'rgba(239, 68, 68, 0.5)'
+                        },
+                        success: {
+                            DEFAULT: '#10b981',
+                            glow: 'rgba(16, 185, 129, 0.5)'
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+                        'glow-primary': '0 0 40px -10px rgba(124, 58, 237, 0.4)',
+                        'glow-danger': '0 0 40px -10px rgba(239, 68, 68, 0.4)',
+                    },
+                    animation: {
+                        'spin-slow': 'spin 12s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & Framer Motion -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Reset & Base Styles */
+        *, *::before, *::after { box-sizing: border-box; }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            background-color: #09090b;
+            color: #fafafa;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            font-feature-settings: "cv11", "ss01";
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #root {
+            height: 100dvh;
+            max-height: 100dvh;
+            width: 100%;
+            max-width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Safe area utilities */
+        .safe-area-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+        .safe-area-top { padding-top: max(16px, env(safe-area-inset-top)); }
+
+        /* 3D Transform Utilities for Card Flip */
+        .perspective-container { perspective: 1200px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* Scrollbar & Inputs */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input:focus { outline: none; }
+
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .glass-button {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // --- Game Data ---
+        const GAME_DATA = [
+            { 
+                category: "Animais", 
+                items: [
+                    { word: "Leão", hints: ["Dorme de dia", "Caça em grupo", "Savana", "Animal forte"] },
+                    { word: "Pinguim", hints: ["Gelo", "Anda engraçado", "Frio", "Nada bem"] },
+                    { word: "Girafa", hints: ["Come no alto", "Muito alta", "África", "Manchas"] },
+                    { word: "Elefante", hints: ["Memória boa", "Anda em bando", "Pesado", "Circo"] },
+                    { word: "Tubarão", hints: ["Mar", "Dá medo", "Filme famoso", "Dentes"] },
+                    { word: "Gato", hints: ["Dorme muito", "Independente", "Sobe móveis", "Limpo"] },
+                    { word: "Cachorro", hints: ["Melhor amigo", "Passear", "Protege casa", "Fiel"] }
+                ]
+            },
+            { 
+                category: "Países", 
+                items: [
+                    { word: "Brasil", hints: ["Calor", "Festa", "Natureza", "Alegria"] },
+                    { word: "Japão", hints: ["Do outro lado", "Tecnologia", "Ilhas", "Tradição"] },
+                    { word: "França", hints: ["Romântico", "Comida boa", "Turismo", "Europa"] },
+                    { word: "Egito", hints: ["Muito antigo", "Deserto", "Rio famoso", "Calor"] },
+                    { word: "Austrália", hints: ["Muito longe", "Bichos loucos", "Praias", "Inglês"] },
+                    { word: "Itália", hints: ["Comida boa", "História", "Europa", "Mãos"] },
+                    { word: "Canadá", hints: ["Muito frio", "Educados", "Norte", "Natureza"] }
+                ]
+            },
+            { 
+                category: "Comidas", 
+                items: [
+                    { word: "Pizza", hints: ["Jantar rápido", "Com a mão", "Compartilhar", "Entrega"] },
+                    { word: "Sushi", hints: ["Comida fria", "Palitinho", "Leve", "Peixe"] },
+                    { word: "Churrasco", hints: ["Domingo", "Amigos", "Fumaça", "Carne"] },
+                    { word: "Lasanha", hints: ["Almoço família", "Forno", "Quente", "Massa"] },
+                    { word: "Hambúrguer", hints: ["Lanche", "Sexta-feira", "Com a mão", "Rápido"] },
+                    { word: "Sorvete", hints: ["Calor", "Derrete", "Sobremesa", "Gelado"] },
+                    { word: "Chocolate", hints: ["Presente", "Tira estresse", "Derrete", "Doce"] }
+                ]
+            },
+            { 
+                category: "Profissões", 
+                items: [
+                    { word: "Médico", hints: ["Cuida de gente", "Plantão", "Hospital", "Estuda muito"] },
+                    { word: "Astronauta", hints: ["Vai longe", "Coragem", "Vê a Terra", "Espaço"] },
+                    { word: "Bombeiro", hints: ["Salva vidas", "Perigo", "Sirene", "Apaga fogo"] },
+                    { word: "Professor", hints: ["Ensina", "Fala muito", "Paciência", "Escola"] },
+                    { word: "Mágico", hints: ["Truques", "Engana", "Show", "Mistério"] },
+                    { word: "Policial", hints: ["Protege", "Farda", "Ronda", "Segurança"] },
+                    { word: "Chef", hints: ["Cozinha bem", "Manda", "Prepara", "Restaurante"] }
+                ]
+            },
+            { 
+                category: "Objetos", 
+                items: [
+                    { word: "Relógio", hints: ["Marca tempo", "No pulso", "Olha sempre", "Atraso"] },
+                    { word: "Guarda-chuva", hints: ["Chuva", "Esquece", "Abre e fecha", "Molhado"] },
+                    { word: "Espelho", hints: ["Se ver", "Banheiro", "Azar", "Reflexo"] },
+                    { word: "Cadeira", hints: ["Sentar", "Mesa", "Descanso", "Pernas"] },
+                    { word: "Telefone", hints: ["Usa sempre", "Bolso", "Vício", "Comunica"] },
+                    { word: "Livro", hints: ["História", "Ler", "Imaginar", "Papel"] },
+                    { word: "Computador", hints: ["Trabalho", "Tela", "Internet", "Digitar"] }
+                ]
+            },
+            {
+                category: "Filmes",
+                items: [
+                    { word: "Titanic", hints: ["Navio afunda", "Jack e Rose", "Água gelada", "Música triste", "Iceberg"] },
+                    { word: "Avatar", hints: ["Gente azul", "Planeta Pandora", "Árvore gigante", "3D", "James Cameron"] },
+                    { word: "Vingadores", hints: ["Muitos heróis", "Thanos", "Joias", "Marvel", "Salvar o mundo"] },
+                    { word: "Shrek", hints: ["Ogro verde", "Burro falante", "Pântano", "Princesa Fiona", "Conto de fadas"] },
+                    { word: "Harry Potter", hints: ["Bruxo", "Varinha", "Cicatriz", "Hogwarts", "Magia"] },
+                    { word: "Star Wars", hints: ["Sabre de luz", "Darth Vader", "Espaço", "Força", "Jedi"] },
+                    { word: "Matrix", hints: ["Pílula vermelha", "Mundo digital", "Neo", "Câmera lenta", "Desviar de balas"] },
+                    { word: "Rei Leão", hints: ["Hakuna Matata", "Simba", "Savana", "Mufasa", "Desenho clássico"] },
+                    { word: "Frozen", hints: ["Let it Go", "Gelo", "Elsa e Anna", "Boneco de neve", "Frio"] },
+                    { word: "Coringa", hints: ["Palhaço", "Risada", "Vilão", "Batman", "Maquiagem"] },
+                    { word: "Batman", hints: ["Morcego", "Caverna", "Rico", "Gotham", "Cinto de utilidades"] },
+                    { word: "Homem Aranha", hints: ["Teia", "Picada", "Tio Ben", "Escalar paredes", "Vermelho e azul"] },
+                    { word: "Barbie", hints: ["Boneca", "Tudo rosa", "Ken", "Casa dos sonhos", "Margot Robbie"] },
+                    { word: "Oppenheimer", hints: ["Bomba atômica", "Explosão", "Cientista", "Guerra", "Físico"] },
+                    { word: "Velozes e Furiosos", hints: ["Carros", "Corrida", "Família", "Vin Diesel", "Ação"] },
+                    { word: "Toy Story", hints: ["Brinquedos vivos", "Woody", "Buzz", "Amigo estou aqui", "Quarto do Andy"] },
+                    { word: "Jurassic Park", hints: ["Dinossauros", "Parque", "T-Rex", "Ilha", "Fóssil"] },
+                    { word: "Tubarão", hints: ["Praia", "Medo", "Barco", "Dentes", "Música de suspense"] },
+                    { word: "Pânico", hints: ["Máscara", "Terror", "Telefone toca", "Faca", "Adolescentes"] },
+                    { word: "O Exorcista", hints: ["Possuída", "Cama treme", "Padre", "Terror", "Cabeça gira"] },
+                    { word: "Esqueceram de Mim", hints: ["Sozinho em casa", "Natal", "Ladrões", "Armadilhas", "Menino loiro"] },
+                    { word: "Piratas do Caribe", hints: ["Jack Sparrow", "Navio", "Tesouro", "Mar", "Bêbado"] },
+                    { word: "Senhor dos Anéis", hints: ["Anel", "Hobbit", "Gandalf", "Terra Média", "Jornada"] },
+                    { word: "Crepúsculo", hints: ["Vampiro brilha", "Lobisomem", "Bella e Edward", "Romance", "Floresta"] },
+                    { word: "Jogos Vorazes", hints: ["Arco e flecha", "Katniss", "Sobrevivência", "Distritos", "Pássaro"] },
+                    { word: "007", hints: ["Espião", "Terno", "Bond", "Arma", "Carro chique"] },
+                    { word: "Missão Impossível", hints: ["Tom Cruise", "Correr muito", "Máscara", "Espionagem", "Música tema"] },
+                    { word: "Rocky", hints: ["Boxe", "Luta", "Treino", "Escadaria", "Olho roxo"] },
+                    { word: "O Poderoso Chefão", hints: ["Máfia", "Família", "Proposta irrecusável", "Itália", "Don Corleone"] },
+                    { word: "Forrest Gump", hints: ["Correr", "Caixa de bombom", "Contar histórias", "Guerra", "Pingue-pongue"] },
+                    { word: "De Volta para o Futuro", hints: ["Carro viaja", "Doutor", "Skate voador", "Passado", "Raio"] },
+                    { word: "Indiana Jones", hints: ["Chicote", "Chapéu", "Arqueólogo", "Aventura", "Pedra rolando"] },
+                    { word: "E.T.", hints: ["Extraterrestre", "Bicicleta voa", "Dedo brilha", "Telefone", "Casa"] },
+                    { word: "Ghostbusters", hints: ["Fantasmas", "Mochila de raio", "Geleia", "Música famosa", "Nova York"] },
+                    { word: "MIB", hints: ["Homens de preto", "Aliens", "Apagar memória", "Terno", "Will Smith"] },
+                    { word: "A Era do Gelo", hints: ["Mamute", "Preguiça", "Noz", "Esquilo", "Frio"] },
+                    { word: "Madagascar", hints: ["Zoológico", "Leão e Zebra", "Pinguins", "Ilha", "Remexer muito"] },
+                    { word: "Kung Fu Panda", hints: ["Panda gordo", "Luta", "Dragão", "Mestre", "Comer"] },
+                    { word: "Meu Malvado Favorito", hints: ["Minions", "Gru", "Lua", "Vilão", "Meninas"] },
+                    { word: "Minions", hints: ["Amarelos", "Banana", "Óculos", "Falam estranho", "Ajudantes"] },
+                    { word: "Divertida Mente", hints: ["Emoções", "Alegria e Tristeza", "Cérebro", "Memórias", "Menina"] },
+                    { word: "Up", hints: ["Casa voa", "Balões", "Velhinho", "Escoteiro", "Cachorro fala"] },
+                    { word: "Wall-E", hints: ["Robô", "Lixo", "Espaço", "Planta", "Futuro"] },
+                    { word: "Procurando Nemo", hints: ["Peixe palhaço", "Oceano", "Dory", "Perdido", "Aquário"] },
+                    { word: "Os Incríveis", hints: ["Família heróis", "Roupa vermelha", "Bebê poderoso", "Correr rápido", "Elástico"] },
+                    { word: "Carros", hints: ["Relâmpago McQueen", "Corrida", "Falam", "Pneus", "Tomate"] },
+                    { word: "Monstros S.A.", hints: ["Susto", "Portas", "Mike e Sulley", "Gritos", "Menina Boo"] },
+                    { word: "A Bela e a Fera", hints: ["Rosa", "Castelo", "Xícara fala", "Dança", "Amarelo"] },
+                    { word: "Aladdin", hints: ["Gênio", "Lâmpada", "Tapete voa", "Príncipe", "Desejos"] },
+                    { word: "Mulan", hints: ["Guerreira", "China", "Espada", "Dragãozinho", "Disfarce"] }
+                ]
+            },
+            {
+                category: "Locais",
+                items: [
+                    { word: "Praia", hints: ["Areia", "Mar", "Sol", "Férias", "Protetor solar"] },
+                    { word: "Shopping", hints: ["Lojas", "Praça de alimentação", "Ar condicionado", "Compras", "Cinema"] },
+                    { word: "Escola", hints: ["Estudar", "Professor", "Lousa", "Recreio", "Prova"] },
+                    { word: "Hospital", hints: ["Médico", "Doente", "Remédio", "Emergência", "Branco"] },
+                    { word: "Aeroporto", hints: ["Avião", "Malas", "Viagem", "Passaporte", "Embarque"] },
+                    { word: "Cinema", hints: ["Pipoca", "Filme", "Tela grande", "Escuro", "Ingresso"] },
+                    { word: "Parque", hints: ["Árvores", "Banco", "Passear", "Crianças", "Piquenique"] },
+                    { word: "Academia", hints: ["Treino", "Pesos", "Suor", "Músculo", "Esteira"] },
+                    { word: "Restaurante", hints: ["Comer", "Garçom", "Cardápio", "Mesa", "Conta"] },
+                    { word: "Supermercado", hints: ["Carrinho", "Compras", "Caixa", "Prateleiras", "Comida"] },
+                    { word: "Igreja", hints: ["Rezar", "Padre", "Casamento", "Domingo", "Silêncio"] },
+                    { word: "Banco", hints: ["Dinheiro", "Fila", "Caixa eletrônico", "Cartão", "Gerente"] },
+                    { word: "Hotel", hints: ["Dormir fora", "Quarto", "Café da manhã", "Recepção", "Viagem"] },
+                    { word: "Estádio", hints: ["Futebol", "Torcida", "Gramado", "Gol", "Arquibancada"] },
+                    { word: "Biblioteca", hints: ["Livros", "Silêncio", "Ler", "Estudar", "Estantes"] },
+                    { word: "Museu", hints: ["História", "Quadros", "Antigo", "Exposição", "Arte"] },
+                    { word: "Zoológico", hints: ["Animais", "Jaulas", "Passeio", "Leão", "Macaco"] },
+                    { word: "Circo", hints: ["Palhaço", "Lona", "Pipoca", "Malabarista", "Espetáculo"] },
+                    { word: "Fazenda", hints: ["Animais", "Plantação", "Terra", "Cavalo", "Trator"] },
+                    { word: "Floresta", hints: ["Árvores", "Mato", "Animais", "Verde", "Natureza"] },
+                    { word: "Deserto", hints: ["Areia", "Calor", "Seco", "Camelo", "Cacto"] },
+                    { word: "Montanha", hints: ["Alto", "Escalar", "Frio", "Vista", "Neve"] },
+                    { word: "Caverna", hints: ["Escuro", "Morcego", "Pedra", "Buraco", "Eco"] },
+                    { word: "Ilha", hints: ["Mar em volta", "Isolada", "Praia", "Barco", "Coqueiro"] },
+                    { word: "Cachoeira", hints: ["Água cai", "Banho", "Pedras", "Natureza", "Molhado"] },
+                    { word: "Rio", hints: ["Água corre", "Peixe", "Barco", "Pescar", "Ponte"] },
+                    { word: "Lago", hints: ["Água parada", "Patos", "Pedalinho", "Calmo", "Espelho d'água"] },
+                    { word: "Piscina", hints: ["Nadar", "Azul", "Cloro", "Verão", "Mergulhar"] },
+                    { word: "Quintal", hints: ["Casa", "Brincar", "Churrasco", "Cachorro", "Varal"] },
+                    { word: "Cozinha", hints: ["Fogão", "Geladeira", "Cozinhar", "Comida", "Pia"] },
+                    { word: "Banheiro", hints: ["Chuveiro", "Privada", "Banho", "Escovar dentes", "Espelho"] },
+                    { word: "Quarto", hints: ["Cama", "Dormir", "Guarda-roupa", "Travesseiro", "Descanso"] },
+                    { word: "Sala", hints: ["Sofá", "TV", "Visita", "Família", "Tapete"] },
+                    { word: "Garagem", hints: ["Carro", "Portão", "Guardar", "Ferramentas", "Moto"] },
+                    { word: "Escritório", hints: ["Trabalho", "Computador", "Mesa", "Cadeira", "Papéis"] },
+                    { word: "Loja", hints: ["Vender", "Vitrine", "Roupas", "Preço", "Sacola"] },
+                    { word: "Padaria", hints: ["Pão", "Café", "Manhã", "Cheiro bom", "Doce"] },
+                    { word: "Farmácia", hints: ["Remédio", "Doente", "Comprar", "Receita", "Balcão"] },
+                    { word: "Posto de Gasolina", hints: ["Abastecer", "Carro", "Combustível", "Bomba", "Conveniência"] },
+                    { word: "Rodoviária", hints: ["Ônibus", "Viagem", "Passagem", "Mala", "Embarque"] },
+                    { word: "Metrô", hints: ["Trem", "Subterrâneo", "Rápido", "Trilhos", "Estação"] },
+                    { word: "Ponto de Ônibus", hints: ["Esperar", "Em pé", "Transporte", "Abrigo", "Placa"] },
+                    { word: "Feira", hints: ["Frutas", "Verduras", "Pastel", "Barraca", "Rua"] },
+                    { word: "Praça", hints: ["Banco", "Pombos", "Árvores", "Centro", "Passear"] },
+                    { word: "Rua", hints: ["Carros", "Asfalto", "Casas", "Caminhar", "Trânsito"] },
+                    { word: "Calçada", hints: ["Pedestres", "Andar", "Cimento", "Frente da casa", "Meio-fio"] },
+                    { word: "Ponte", hints: ["Atravessar", "Rio embaixo", "Alta", "Concreto", "Estrada"] },
+                    { word: "Túnel", hints: ["Escuro", "Embaixo da terra", "Carros", "Eco", "Luz no fim"] },
+                    { word: "Prédio", hints: ["Alto", "Elevador", "Apartamentos", "Janelas", "Morar"] },
+                    { word: "Casa", hints: ["Lar", "Família", "Telhado", "Porta", "Morar"] }
+                ]
+            },
+            {
+                category: "Marcas",
+                items: [
+                    { word: "Coca-Cola", hints: ["Refrigerante", "Vermelho", "Gás", "Preto", "Urso polar"] },
+                    { word: "McDonald's", hints: ["Hambúrguer", "M amarelo", "Palhaço", "Batata frita", "Lanche"] },
+                    { word: "Nike", hints: ["Tênis", "Esporte", "Símbolo certo", "Just do it", "Roupa"] },
+                    { word: "Adidas", hints: ["Três listras", "Tênis", "Futebol", "Esporte", "Alemã"] },
+                    { word: "Apple", hints: ["Maçã", "iPhone", "Caro", "Tecnologia", "Steve Jobs"] },
+                    { word: "Samsung", hints: ["Celular", "Coreia", "Galaxy", "TV", "Concorrente da Apple"] },
+                    { word: "Google", hints: ["Pesquisar", "Internet", "Cores", "Sabe tudo", "Site"] },
+                    { word: "Facebook", hints: ["Rede social", "Azul", "Amigos", "Mark Zuckerberg", "Curtir"] },
+                    { word: "Instagram", hints: ["Fotos", "Stories", "Filtros", "Influencer", "Câmera"] },
+                    { word: "WhatsApp", hints: ["Mensagem", "Verde", "Zap", "Grupo", "Conversar"] },
+                    { word: "YouTube", hints: ["Vídeos", "Vermelho", "Play", "Youtuber", "Assistir"] },
+                    { word: "Netflix", hints: ["Filmes", "Séries", "Vermelho", "Streaming", "Maratona"] },
+                    { word: "Amazon", hints: ["Entregas", "Caixa", "Compras online", "Seta sorriso", "Tudo"] },
+                    { word: "Disney", hints: ["Mickey", "Castelo", "Filmes", "Parque", "Princesas"] },
+                    { word: "Marvel", hints: ["Heróis", "Vingadores", "Quadrinhos", "Stan Lee", "Filmes"] },
+                    { word: "Lego", hints: ["Blocos", "Montar", "Brinquedo", "Colorido", "Peças"] },
+                    { word: "Barbie", hints: ["Boneca", "Rosa", "Meninas", "Ken", "Brinquedo"] },
+                    { word: "Hot Wheels", hints: ["Carrinhos", "Pista", "Laranja", "Velocidade", "Coleção"] },
+                    { word: "Nestlé", hints: ["Chocolate", "Leite", "Ninho", "Comida", "Suíça"] },
+                    { word: "Garoto", hints: ["Chocolate", "Caixa amarela", "Bombom", "Serenata", "Brasil"] },
+                    { word: "Lacta", hints: ["Chocolate", "Azul", "Diamante Negro", "Sonho de Valsa", "Doce"] },
+                    { word: "Sadia", hints: ["Presunto", "Frango", "S do capacete", "Frios", "Lanche"] },
+                    { word: "Perdigão", hints: ["Chester", "Presunto", "Salsicha", "Comida", "Frios"] },
+                    { word: "Seara", hints: ["Fátima Bernardes", "Presunto", "Frango", "Lasanha", "Frios"] },
+                    { word: "Omo", hints: ["Lavar roupa", "Sabão em pó", "Azul", "Limpeza", "Máquina"] },
+                    { word: "Veja", hints: ["Limpeza", "Revista", "Multiuso", "Casa", "Faxina"] },
+                    { word: "Ypê", hints: ["Detergente", "Amarelo", "Lavar louça", "Natureza", "Limpeza"] },
+                    { word: "Bombril", hints: ["Palha de aço", "Limpar panela", "1001 utilidades", "Brilho", "Cozinha"] },
+                    { word: "Colgate", hints: ["Pasta de dente", "Escovar", "Sorriso", "Vermelho", "Hálito"] },
+                    { word: "Sorriso", hints: ["Pasta de dente", "Amarelo", "Dentes", "Boca", "Brasileira"] },
+                    { word: "Dove", hints: ["Sabonete", "Pomba", "Hidratante", "Branco", "Suave"] },
+                    { word: "Rexona", hints: ["Desodorante", "Não te abandona", "Suor", "Axila", "Spray"] },
+                    { word: "Nivea", hints: ["Creme", "Azul", "Pele", "Hidratante", "Latinha"] },
+                    { word: "Avon", hints: ["Revista", "Maquiagem", "Perfume", "Vendedora", "Cosméticos"] },
+                    { word: "Natura", hints: ["Perfume", "Brasil", "Natureza", "Kaiak", "Cosméticos"] },
+                    { word: "Boticário", hints: ["Perfume", "Loja verde", "Presente", "Malbec", "Cheiro"] },
+                    { word: "Zara", hints: ["Roupas", "Moda", "Shopping", "Espanha", "Estilo"] },
+                    { word: "Renner", hints: ["Roupas", "Loja grande", "Shopping", "Vermelho", "Moda"] },
+                    { word: "C&A", hints: ["Roupas", "Abuse e use", "Shopping", "Moda", "Loja"] },
+                    { word: "Riachuelo", hints: ["Roupas", "Loja", "Verde", "Moda", "Shopping"] },
+                    { word: "Havaianas", hints: ["Chinelo", "Brasil", "Borracha", "Todo mundo usa", "Pé"] },
+                    { word: "Melissa", hints: ["Sandália", "Cheiro de chiclete", "Plástico", "Meninas", "Moda"] },
+                    { word: "All Star", hints: ["Tênis", "Lona", "Estrela", "Clássico", "Converse"] },
+                    { word: "Vans", hints: ["Tênis", "Skatista", "Listra", "Preto e branco", "Jovem"] },
+                    { word: "Ford", hints: ["Carro", "Azul", "Ka", "Fiesta", "Americana"] },
+                    { word: "Chevrolet", hints: ["Carro", "Gravata", "Onix", "Americana", "General Motors"] },
+                    { word: "Volkswagen", hints: ["Carro", "Fusca", "Gol", "Alemã", "VW"] },
+                    { word: "Fiat", hints: ["Carro", "Uno", "Palio", "Italiana", "Vermelho"] },
+                    { word: "Honda", hints: ["Moto", "Carro", "Civic", "Japonesa", "H"] },
+                    { word: "Toyota", hints: ["Carro", "Corolla", "Hilux", "Japonesa", "Resistente"] }
+                ]
+            },
+            {
+                category: "Ferramentas",
+                items: [
+                    { word: "Martelo", hints: ["Bater", "Prego", "Cabo de madeira", "Construção", "Thor"] },
+                    { word: "Chave de Fenda", hints: ["Parafuso", "Girar", "Apertar", "Ponta chata", "Consertar"] },
+                    { word: "Alicate", hints: ["Cortar fio", "Apertar", "Segurar", "Bico", "Eletricista"] },
+                    { word: "Serrote", hints: ["Cortar madeira", "Dentes", "Serragem", "Carpinteiro", "Vai e vem"] },
+                    { word: "Furadeira", hints: ["Furo", "Parede", "Barulho", "Broca", "Elétrica"] },
+                    { word: "Pregos", hints: ["Martelo", "Metal", "Ponta", "Fixar", "Parede"] },
+                    { word: "Parafuso", hints: ["Rosca", "Girar", "Fixar", "Cabeça", "Chave"] },
+                    { word: "Trena", hints: ["Medir", "Fita", "Metros", "Enrola", "Construção"] },
+                    { word: "Nível", hints: ["Reto", "Bolha", "Água", "Alinhar", "Pedreiro"] },
+                    { word: "Escada", hints: ["Subir", "Alto", "Degraus", "Pintar", "Trocar lâmpada"] },
+                    { word: "Pincel", hints: ["Pintar", "Tinta", "Cerdas", "Parede", "Arte"] },
+                    { word: "Rolo", hints: ["Pintar", "Parede", "Tinta", "Grande", "Espuma"] },
+                    { word: "Lixa", hints: ["Áspero", "Alisar", "Madeira", "Pó", "Parede"] },
+                    { word: "Cola", hints: ["Grudar", "Líquida", "Branca", "Consertar", "Escola"] },
+                    { word: "Fita Isolante", hints: ["Preta", "Fio", "Eletricidade", "Colar", "Plástico"] },
+                    { word: "Tesoura", hints: ["Cortar", "Papel", "Duas lâminas", "Escola", "Costura"] },
+                    { word: "Estilete", hints: ["Lâmina", "Cortar", "Afiado", "Papelão", "Retrátil"] },
+                    { word: "Machado", hints: ["Lenha", "Cortar árvore", "Afiado", "Lenhador", "Pesado"] },
+                    { word: "Pá", hints: ["Cavar", "Terra", "Buraco", "Jardim", "Obra"] },
+                    { word: "Enxada", hints: ["Capinar", "Terra", "Roça", "Mato", "Jardim"] },
+                    { word: "Rastelo", hints: ["Folhas", "Jardim", "Puxar", "Limpar", "Dentes"] },
+                    { word: "Regador", hints: ["Água", "Plantas", "Jardim", "Molhar", "Bico"] },
+                    { word: "Mangueira", hints: ["Água", "Lavar carro", "Jardim", "Comprida", "Torneira"] },
+                    { word: "Carrinho de Mão", hints: ["Obra", "Carregar", "Areia", "Uma roda", "Pedreiro"] },
+                    { word: "Lanterna", hints: ["Luz", "Escuro", "Pilha", "Mão", "Acampar"] },
+                    { word: "Bateria", hints: ["Energia", "Carro", "Pilha", "Carga", "Elétrica"] },
+                    { word: "Extensão", hints: ["Fio", "Tomada", "Longe", "Ligar", "Energia"] },
+                    { word: "Tomada", hints: ["Parede", "Energia", "Plugue", "Choque", "Buracos"] },
+                    { word: "Interruptor", hints: ["Luz", "Ligar", "Desligar", "Parede", "Botão"] },
+                    { word: "Lâmpada", hints: ["Luz", "Teto", "Vidro", "Queima", "Ideia"] },
+                    { word: "Cadeado", hints: ["Trancar", "Chave", "Segredo", "Portão", "Segurança"] },
+                    { word: "Chave", hints: ["Abrir", "Porta", "Metal", "Carro", "Chaveiro"] },
+                    { word: "Corrente", hints: ["Metal", "Elos", "Prender", "Cadeado", "Forte"] },
+                    { word: "Corda", hints: ["Amarrar", "Nó", "Puxar", "Varal", "Pular"] },
+                    { word: "Arame", hints: ["Metal", "Fino", "Amarrar", "Cerca", "Duro"] },
+                    { word: "Balde", hints: ["Água", "Limpeza", "Plástico", "Alça", "Encher"] },
+                    { word: "Vassoura", hints: ["Varrer", "Chão", "Limpeza", "Bruxa", "Pó"] },
+                    { word: "Rodo", hints: ["Puxar água", "Chão", "Borracha", "Secar", "Limpeza"] },
+                    { word: "Pano", hints: ["Limpar", "Secar", "Chão", "Pó", "Tecido"] },
+                    { word: "Esponja", hints: ["Lavar louça", "Espuma", "Amarela", "Macio", "Pia"] },
+                    { word: "Sabão", hints: ["Lavar", "Espuma", "Cheiro", "Limpeza", "Barra"] },
+                    { word: "Detergente", hints: ["Lavar louça", "Líquido", "Espuma", "Gordura", "Pia"] },
+                    { word: "Água Sanitária", hints: ["Cheiro forte", "Branco", "Matar germes", "Limpeza", "Roupa"] },
+                    { word: "Desinfetante", hints: ["Cheiro bom", "Chão", "Limpeza", "Banheiro", "Líquido"] },
+                    { word: "Álcool", hints: ["Limpeza", "Gel", "Fogo", "Desinfetar", "Cheiro forte"] },
+                    { word: "Luvas", hints: ["Mãos", "Proteção", "Borracha", "Limpeza", "Frio"] },
+                    { word: "Máscara", hints: ["Rosto", "Proteção", "Pó", "Solda", "Vírus"] },
+                    { word: "Óculos", hints: ["Olhos", "Proteção", "Segurança", "Ver", "Obra"] },
+                    { word: "Capacete", hints: ["Cabeça", "Proteção", "Obra", "Moto", "Duro"] },
+                    { word: "Botas", hints: ["Pés", "Borracha", "Chuva", "Obra", "Proteção"] }
+                ]
+            },
+            {
+                category: "Veículos",
+                items: [
+                    { word: "Carro", hints: ["Rodas", "Dirigir", "Volante", "Garagem", "Motor"] },
+                    { word: "Moto", hints: ["Duas rodas", "Capacete", "Equilíbrio", "Rápido", "Guidão"] },
+                    { word: "Ônibus", hints: ["Grande", "Passageiros", "Ponto", "Motorista", "Transporte"] },
+                    { word: "Caminhão", hints: ["Carga", "Estrada", "Grande", "Pesado", "Carreta"] },
+                    { word: "Bicicleta", hints: ["Pedalar", "Duas rodas", "Sem motor", "Guidão", "Corrente"] },
+                    { word: "Skate", hints: ["Prancha", "Rodinhas", "Manobra", "Rua", "Jovem"] },
+                    { word: "Patins", hints: ["Pés", "Rodinhas", "Deslizar", "Parque", "Equilíbrio"] },
+                    { word: "Patinete", hints: ["Empurrar", "Duas rodas", "Guidão", "Criança", "Elétrico"] },
+                    { word: "Avião", hints: ["Voar", "Céu", "Asas", "Aeroporto", "Viagem"] },
+                    { word: "Helicóptero", hints: ["Hélice", "Voar", "Barulho", "Pousar", "Céu"] },
+                    { word: "Barco", hints: ["Água", "Navegar", "Remo", "Pesca", "Mar"] },
+                    { word: "Navio", hints: ["Grande", "Mar", "Cruzeiro", "Carga", "Titanic"] },
+                    { word: "Lancha", hints: ["Rápido", "Mar", "Luxo", "Passeio", "Motor"] },
+                    { word: "Jet Ski", hints: ["Moto de água", "Rápido", "Praia", "Molhar", "Diversão"] },
+                    { word: "Submarino", hints: ["Embaixo d'água", "Fundo do mar", "Guerra", "Amarelo", "Periscópio"] },
+                    { word: "Trem", hints: ["Trilhos", "Vagões", "Apito", "Estação", "Ferrovia"] },
+                    { word: "Metrô", hints: ["Subterrâneo", "Rápido", "Cidade", "Trilhos", "Estação"] },
+                    { word: "Bonde", hints: ["Trilhos", "Cidade", "Antigo", "Elétrico", "Passeio"] },
+                    { word: "Trator", hints: ["Roça", "Pneus grandes", "Força", "Terra", "Lento"] },
+                    { word: "Guindaste", hints: ["Levantar", "Obra", "Alto", "Peso", "Construção"] },
+                    { word: "Ambulância", hints: ["Sirene", "Hospital", "Doente", "Emergência", "Branca"] },
+                    { word: "Carro de Polícia", hints: ["Sirene", "Preso", "Lei", "Patrulha", "Luzes"] },
+                    { word: "Carro de Bombeiro", hints: ["Vermelho", "Sirene", "Água", "Escada", "Fogo"] },
+                    { word: "Táxi", hints: ["Passageiro", "Pagamento", "Motorista", "Amarelo", "Corrida"] },
+                    { word: "Uber", hints: ["Aplicativo", "Celular", "Carro", "Corrida", "Motorista"] },
+                    { word: "Foguete", hints: ["Espaço", "Lua", "Astronauta", "Lançamento", "NASA"] },
+                    { word: "Balão", hints: ["Ar quente", "Cesta", "Voar", "Céu", "Colorido"] },
+                    { word: "Dirigível", hints: ["Balão grande", "Céu", "Gás", "Lento", "Propaganda"] },
+                    { word: "Paraquedas", hints: ["Cair", "Avião", "Abrir", "Céu", "Pular"] },
+                    { word: "Asa Delta", hints: ["Voar", "Sozinho", "Vento", "Alto", "Esporte"] },
+                    { word: "Cavalo", hints: ["Animal", "Montar", "Sela", "Galopar", "Fazenda"] },
+                    { word: "Carroça", hints: ["Cavalo", "Madeira", "Rodas", "Antigo", "Carga"] },
+                    { word: "Charrete", hints: ["Passeio", "Cavalo", "Rodas", "Parque", "Sentar"] },
+                    { word: "Trenó", hints: ["Neve", "Papai Noel", "Deslizar", "Cães", "Gelo"] },
+                    { word: "Carrinho de Bebê", hints: ["Criança", "Empurrar", "Passeio", "Rodas", "Dormir"] },
+                    { word: "Cadeira de Rodas", hints: ["Sentado", "Rodas", "Acessibilidade", "Hospital", "Mover"] },
+                    { word: "Elevador", hints: ["Subir", "Descer", "Prédio", "Botão", "Porta"] },
+                    { word: "Escada Rolante", hints: ["Shopping", "Subir", "Degraus", "Móvel", "Preguiça"] },
+                    { word: "Esteira", hints: ["Academia", "Correr", "Lugar", "Aeroporto", "Malas"] },
+                    { word: "Teleférico", hints: ["Cabo", "Alto", "Turismo", "Montanha", "Bondinho"] },
+                    { word: "Bondinho", hints: ["Pão de Açúcar", "Cabo", "Alto", "Turismo", "Rio de Janeiro"] },
+                    { word: "Balsa", hints: ["Atravessar", "Carros", "Rio", "Lento", "Água"] },
+                    { word: "Cruzeiro", hints: ["Navio gigante", "Férias", "Piscina", "Mar", "Viagem"] },
+                    { word: "Iate", hints: ["Rico", "Luxo", "Mar", "Barco", "Festa"] },
+                    { word: "Canoa", hints: ["Índio", "Remo", "Madeira", "Rio", "Pequeno"] },
+                    { word: "Jangada", hints: ["Madeira", "Mar", "Nordeste", "Vela", "Pescador"] },
+                    { word: "Prancha", hints: ["Surf", "Mar", "Onda", "Equilíbrio", "Praia"] },
+                    { word: "Moto Aquática", hints: ["Jet Ski", "Água", "Rápido", "Praia", "Motor"] },
+                    { word: "Quadriciclo", hints: ["Quatro rodas", "Terra", "Aventura", "Moto", "Praia"] },
+                    { word: "Kart", hints: ["Corrida", "Pequeno", "Pista", "Capacete", "Diversão"] }
+                ]
+            },
+            {
+                category: "Superpoderes",
+                items: [
+                    { word: "Voar", hints: ["Céu", "Pássaro", "Avião", "Superman", "Alto"] },
+                    { word: "Invisibilidade", hints: ["Ninguém vê", "Sumir", "Transparente", "Escondido", "Fantasma"] },
+                    { word: "Super Força", hints: ["Forte", "Levantar carro", "Hulk", "Músculo", "Pesado"] },
+                    { word: "Velocidade", hints: ["Correr", "Rápido", "Flash", "Sonic", "Vento"] },
+                    { word: "Ler Mentes", hints: ["Pensamento", "Saber tudo", "Cérebro", "Segredo", "Telepatia"] },
+                    { word: "Teletransporte", hints: ["Sumiu", "Apareceu", "Lugar", "Instantâneo", "Viagem"] },
+                    { word: "Raio Laser", hints: ["Olhos", "Queimar", "Luz", "Vermelho", "Ciclope"] },
+                    { word: "Gelo", hints: ["Frio", "Congelar", "Elsa", "Neve", "Sub-Zero"] },
+                    { word: "Fogo", hints: ["Queimar", "Quente", "Tocha Humana", "Chama", "Incêndio"] },
+                    { word: "Água", hints: ["Mar", "Onda", "Aquaman", "Molhado", "Controlar"] },
+                    { word: "Vento", hints: ["Ar", "Tornado", "Soprar", "Tempestade", "Voar"] },
+                    { word: "Terra", hints: ["Pedra", "Chão", "Terremoto", "Areia", "Natureza"] },
+                    { word: "Eletricidade", hints: ["Choque", "Raio", "Luz", "Energia", "Super Choque"] },
+                    { word: "Cura", hints: ["Sarar", "Machucado", "Vida", "Médico", "Wolverine"] },
+                    { word: "Imortalidade", hints: ["Não morre", "Eterno", "Viver sempre", "Velho", "Vampiro"] },
+                    { word: "Voltar no Tempo", hints: ["Passado", "Relógio", "Mudar", "Erro", "História"] },
+                    { word: "Parar o Tempo", hints: ["Congelar", "Relógio", "Estátua", "Mundo", "Pausa"] },
+                    { word: "Ver o Futuro", hints: ["Previsão", "Amanhã", "Saber antes", "Bola de cristal", "Destino"] },
+                    { word: "Falar com Animais", hints: ["Bichos", "Entender", "Conversar", "Dr. Dolittle", "Natureza"] },
+                    { word: "Respirar na Água", hints: ["Peixe", "Fundo do mar", "Mergulho", "Aquaman", "Sereia"] },
+                    { word: "Atravessar Paredes", hints: ["Fantasma", "Passar", "Sólido", "Intangível", "Parede"] },
+                    { word: "Ficar Gigante", hints: ["Grande", "Alto", "Crescer", "Esmagar", "Prédio"] },
+                    { word: "Ficar Pequeno", hints: ["Formiga", "Diminuir", "Homem Formiga", "Esconder", "Minúsculo"] },
+                    { word: "Esticar", hints: ["Borracha", "Longo", "Braço", "Sr. Fantástico", "Elástico"] },
+                    { word: "Clonagem", hints: ["Cópia", "Igual", "Dois", "Multiplicar", "Gêmeo"] },
+                    { word: "Metamorfose", hints: ["Mudar", "Transformar", "Forma", "Disfarce", "Mística"] },
+                    { word: "Telepatia", hints: ["Mente", "Conversar", "Sem falar", "Pensamento", "Professor Xavier"] },
+                    { word: "Telecinese", hints: ["Mover", "Mente", "Sem tocar", "Levitar", "Objeto"] },
+                    { word: "Hipnose", hints: ["Sono", "Controle", "Olhos", "Pêndulo", "Ordem"] },
+                    { word: "Campo de Força", hints: ["Escudo", "Proteção", "Bolha", "Invisível", "Barreira"] },
+                    { word: "Visão de Raio-X", hints: ["Ver através", "Ossos", "Parede", "Superman", "Esqueleto"] },
+                    { word: "Visão Noturna", hints: ["Escuro", "Ver", "Noite", "Gato", "Olhos"] },
+                    { word: "Super Audição", hints: ["Ouvir", "Longe", "Barulho", "Orelha", "Sussurro"] },
+                    { word: "Super Olfato", hints: ["Cheiro", "Nariz", "Rastrear", "Cachorro", "Faro"] },
+                    { word: "Super Inteligência", hints: ["Gênio", "Cérebro", "Sabe tudo", "Inventar", "Esperto"] },
+                    { word: "Absorver Poderes", hints: ["Roubar", "Tocar", "Cópia", "Vampira", "Outros"] },
+                    { word: "Controlar Mentes", hints: ["Mandar", "Obedecer", "Cérebro", "Marionete", "Vontade"] },
+                    { word: "Controlar o Tempo", hints: ["Clima", "Chuva", "Sol", "Tempestade", "Tempestade (X-Men)"] },
+                    { word: "Controlar Plantas", hints: ["Natureza", "Árvore", "Flor", "Hera Venenosa", "Crescer"] },
+                    { word: "Controlar Metais", hints: ["Magneto", "Imã", "Ferro", "Atrair", "Entortar"] },
+                    { word: "Controlar Sombras", hints: ["Escuro", "Noite", "Medo", "Esconder", "Preto"] },
+                    { word: "Controlar Luz", hints: ["Brilho", "Sol", "Cegar", "Iluminar", "Claridade"] },
+                    { word: "Criar Portais", hints: ["Buraco", "Passagem", "Outro lugar", "Dr. Estranho", "Atalho"] },
+                    { word: "Criar Ilusões", hints: ["Mentira", "Ver", "Falso", "Mágica", "Enganar"] },
+                    { word: "Voar no Espaço", hints: ["Universo", "Sem ar", "Estrelas", "Capitã Marvel", "Vácuo"] },
+                    { word: "Não Precisar Dormir", hints: ["Acordado", "Cansado", "Noite", "Energia", "Sempre"] },
+                    { word: "Não Precisar Comer", hints: ["Fome", "Alimento", "Energia", "Viver", "Jejum"] },
+                    { word: "Memória Fotográfica", hints: ["Lembrar", "Foto", "Detalhes", "Não esquece", "Mente"] },
+                    { word: "Sorte", hints: ["Azar", "Ganhar", "Dominó", "Acaso", "Tudo dá certo"] },
+                    { word: "Riqueza", hints: ["Dinheiro", "Batman", "Homem de Ferro", "Comprar", "Poder"] }
+                ]
+            },
+            {
+                category: "Medos",
+                items: [
+                    { word: "Escuro", hints: ["Noite", "Luz apagada", "Não ver", "Quarto", "Monstro"] },
+                    { word: "Altura", hints: ["Cair", "Prédio", "Avião", "Vertigem", "Olhar pra baixo"] },
+                    { word: "Barata", hints: ["Inseto", "Nojo", "Voa", "Esgoto", "Chinelo"] },
+                    { word: "Aranha", hints: ["Teia", "Pernas", "Veneno", "Teto", "Pequena"] },
+                    { word: "Cobra", hints: ["Rasteja", "Veneno", "Picada", "Língua", "Mato"] },
+                    { word: "Rato", hints: ["Esgoto", "Rabo", "Queijo", "Doença", "Corre"] },
+                    { word: "Palhaço", hints: ["Circo", "Maquiagem", "Sorriso", "It", "Festa"] },
+                    { word: "Fantasma", hints: ["Morto", "Lençol", "Assombrado", "Espírito", "Invisível"] },
+                    { word: "Morte", hints: ["Fim", "Caixão", "Enterro", "Tristeza", "Vida"] },
+                    { word: "Doença", hints: ["Hospital", "Dor", "Remédio", "Grave", "Vírus"] },
+                    { word: "Sangue", hints: ["Vermelho", "Corte", "Veia", "Desmaio", "Ferida"] },
+                    { word: "Agulha", hints: ["Injeção", "Vacina", "Pontada", "Braço", "Hospital"] },
+                    { word: "Dentista", hints: ["Dente", "Motorzinho", "Boca aberta", "Dor", "Cadeira"] },
+                    { word: "Avião", hints: ["Voar", "Cair", "Altura", "Viagem", "Turbulência"] },
+                    { word: "Elevador", hints: ["Preso", "Cair", "Fechado", "Subir", "Claustrofobia"] },
+                    { word: "Lugar Fechado", hints: ["Aperto", "Sem ar", "Preso", "Caixa", "Sufoco"] },
+                    { word: "Multidão", hints: ["Gente", "Aperto", "Barulho", "Show", "Muvuca"] },
+                    { word: "Falar em Público", hints: ["Vergonha", "Microfone", "Olhares", "Palco", "Gaguejar"] },
+                    { word: "Prova", hints: ["Escola", "Nota", "Estudar", "Reprovar", "Branco"] },
+                    { word: "Fracasso", hints: ["Errar", "Perder", "Vergonha", "Não conseguir", "Decepção"] },
+                    { word: "Solidão", hints: ["Sozinho", "Ninguém", "Triste", "Isolado", "Abandonado"] },
+                    { word: "Trovão", hints: ["Barulho", "Chuva", "Tempestade", "Céu", "Susto"] },
+                    { word: "Raio", hints: ["Luz", "Tempestade", "Queimar", "Céu", "Choque"] },
+                    { word: "Tempestade", hints: ["Chuva", "Vento", "Raios", "Medo", "Casa"] },
+                    { word: "Mar", hints: ["Afogar", "Fundo", "Onda", "Tubarão", "Água"] },
+                    { word: "Afogar", hints: ["Sem ar", "Água", "Nadar", "Fundo", "Respirar"] },
+                    { word: "Fogo", hints: ["Queimar", "Incêndio", "Quente", "Fumaça", "Destruição"] },
+                    { word: "Queimar", hints: ["Fogo", "Dor", "Pele", "Quente", "Marca"] },
+                    { word: "Ladrão", hints: ["Roubar", "Assalto", "Casa", "Polícia", "Perigo"] },
+                    { word: "Sequestro", hints: ["Levar", "Preso", "Resgate", "Carro", "Sumiço"] },
+                    { word: "Arma", hints: ["Tiro", "Bala", "Perigo", "Matar", "Assalto"] },
+                    { word: "Guerra", hints: ["Soldado", "Bomba", "Morte", "Destruição", "País"] },
+                    { word: "Monstro", hints: ["Embaixo da cama", "Feio", "Criança", "Filme", "Assustador"] },
+                    { word: "Zumbi", hints: ["Morto-vivo", "Cérebro", "Andar", "Morder", "Apocalipse"] },
+                    { word: "Vampiro", hints: ["Sangue", "Pescoço", "Dentes", "Noite", "Drácula"] },
+                    { word: "Lobisomem", hints: ["Lua cheia", "Lobo", "Uivo", "Pelo", "Transformar"] },
+                    { word: "Bruxa", hints: ["Feitiço", "Vassoura", "Nariz", "Caldeirão", "Malvada"] },
+                    { word: "Boneca", hints: ["Olhos", "Annabelle", "Brinquedo", "Noite", "Olhar"] },
+                    { word: "Espelho", hints: ["Reflexo", "Noite", "Ver algo", "Quebrar", "Azar"] },
+                    { word: "Escada", hints: ["Cair", "Altura", "Degraus", "Escorregar", "Descer"] },
+                    { word: "Buraco", hints: ["Cair", "Fundo", "Escuro", "Chão", "Terra"] },
+                    { word: "Cair", hints: ["Chão", "Machucar", "Tropeçar", "Altura", "Susto"] },
+                    { word: "Perder Alguém", hints: ["Morte", "Saudade", "Tristeza", "Família", "Luto"] },
+                    { word: "Ser Esquecido", hints: ["Lembrar", "Sozinho", "Ninguém", "Memória", "Triste"] },
+                    { word: "Envelhecer", hints: ["Velho", "Tempo", "Rugas", "Morte", "Idade"] },
+                    { word: "Ficar Pobre", hints: ["Dinheiro", "Dívida", "Trabalho", "Falta", "Conta"] },
+                    { word: "Ficar Careca", hints: ["Cabelo", "Cair", "Cabeça", "Homem", "Espelho"] },
+                    { word: "Engordar", hints: ["Peso", "Comida", "Roupa", "Balança", "Dieta"] },
+                    { word: "Ser Julgado", hints: ["Olhares", "Falar", "Crítica", "Vergonha", "Pessoas"] },
+                    { word: "Errar", hints: ["Falha", "Culpa", "Vergonha", "Tentar", "Corrigir"] }
+                ]
+            },
+            {
+                category: "Invenções",
+                items: [
+                    { word: "Roda", hints: ["Girar", "Carro", "Redonda", "Transporte", "Antiga"] },
+                    { word: "Fogo", hints: ["Quente", "Cozinhar", "Luz", "Homem das cavernas", "Queimar"] },
+                    { word: "Lâmpada", hints: ["Luz", "Edison", "Ideia", "Vidro", "Claro"] },
+                    { word: "Telefone", hints: ["Falar", "Distância", "Graham Bell", "Fio", "Alô"] },
+                    { word: "Internet", hints: ["Conexão", "Mundo", "Wi-Fi", "Site", "Rede"] },
+                    { word: "Computador", hints: ["Tela", "Teclado", "Trabalho", "Máquina", "Processador"] },
+                    { word: "Celular", hints: ["Mão", "Ligação", "Mensagem", "Foto", "Bolso"] },
+                    { word: "Televisão", hints: ["Assistir", "Tela", "Canal", "Sala", "Imagem"] },
+                    { word: "Rádio", hints: ["Ouvir", "Música", "Notícia", "Som", "Antigo"] },
+                    { word: "Carro", hints: ["Motor", "Rodas", "Andar", "Transporte", "Ford"] },
+                    { word: "Avião", hints: ["Voar", "Santos Dumont", "Céu", "Asas", "Viagem"] },
+                    { word: "Geladeira", hints: ["Frio", "Comida", "Conservar", "Cozinha", "Gelo"] },
+                    { word: "Micro-ondas", hints: ["Esquentar", "Rápido", "Comida", "Pipoca", "Cozinha"] },
+                    { word: "Fogão", hints: ["Cozinhar", "Fogo", "Panela", "Gás", "Comida"] },
+                    { word: "Máquina de Lavar", hints: ["Roupa", "Água", "Sabão", "Girar", "Limpar"] },
+                    { word: "Ar Condicionado", hints: ["Frio", "Calor", "Vento", "Refrescar", "Fechado"] },
+                    { word: "Ventilador", hints: ["Vento", "Girar", "Calor", "Hélice", "Ar"] },
+                    { word: "Chuveiro", hints: ["Banho", "Água", "Quente", "Limpar", "Banheiro"] },
+                    { word: "Vaso Sanitário", hints: ["Banheiro", "Xixi", "Sentar", "Descarga", "Privada"] },
+                    { word: "Papel Higiênico", hints: ["Limpar", "Banheiro", "Rolo", "Branco", "Macio"] },
+                    { word: "Escova de Dentes", hints: ["Boca", "Limpar", "Cabo", "Cerdas", "Pasta"] },
+                    { word: "Pasta de Dente", hints: ["Escova", "Hálito", "Tubo", "Espuma", "Dente"] },
+                    { word: "Sabonete", hints: ["Banho", "Cheiro", "Espuma", "Lavar", "Mão"] },
+                    { word: "Shampoo", hints: ["Cabelo", "Lavar", "Espuma", "Cheiro", "Banho"] },
+                    { word: "Perfume", hints: ["Cheiro bom", "Frasco", "Pescoço", "Passar", "Aroma"] },
+                    { word: "Maquiagem", hints: ["Rosto", "Pintar", "Mulher", "Beleza", "Batom"] },
+                    { word: "Espelho", hints: ["Reflexo", "Ver", "Vidro", "Imagem", "Rosto"] },
+                    { word: "Óculos", hints: ["Ver", "Olhos", "Lentes", "Rosto", "Grau"] },
+                    { word: "Relógio", hints: ["Tempo", "Hora", "Pulso", "Ponteiro", "Atraso"] },
+                    { word: "Calendário", hints: ["Dias", "Mês", "Ano", "Data", "Papel"] },
+                    { word: "Dinheiro", hints: ["Comprar", "Papel", "Moeda", "Valor", "Pagamento"] },
+                    { word: "Cartão de Crédito", hints: ["Pagamento", "Plástico", "Banco", "Comprar", "Senha"] },
+                    { word: "Banco", hints: ["Dinheiro", "Guardar", "Conta", "Saque", "Cofre"] },
+                    { word: "Escola", hints: ["Estudar", "Aprender", "Professor", "Aluno", "Ensino"] },
+                    { word: "Hospital", hints: ["Saúde", "Médico", "Doente", "Curar", "Prédio"] },
+                    { word: "Remédio", hints: ["Curar", "Doença", "Pílula", "Farmácia", "Tomar"] },
+                    { word: "Vacina", hints: ["Agulha", "Proteção", "Doença", "Braço", "Vírus"] },
+                    { word: "Raio-X", hints: ["Osso", "Ver dentro", "Foto", "Hospital", "Esqueleto"] },
+                    { word: "Anestesia", hints: ["Dormir", "Sem dor", "Cirurgia", "Médico", "Apagar"] },
+                    { word: "Cirurgia", hints: ["Operar", "Médico", "Corte", "Hospital", "Salvar"] },
+                    { word: "Plástico", hints: ["Material", "Garrafa", "Poluição", "Mole", "Sintético"] },
+                    { word: "Vidro", hints: ["Transparente", "Quebra", "Janela", "Copo", "Areia"] },
+                    { word: "Papel", hints: ["Escrever", "Árvore", "Folha", "Branco", "Caderno"] },
+                    { word: "Caneta", hints: ["Escrever", "Tinta", "Azul", "Papel", "Mão"] },
+                    { word: "Lápis", hints: ["Escrever", "Grafite", "Apagar", "Madeira", "Ponta"] },
+                    { word: "Borracha", hints: ["Apagar", "Lápis", "Erro", "Escola", "Branca"] },
+                    { word: "Caderno", hints: ["Escrever", "Folhas", "Escola", "Anotar", "Espiral"] },
+                    { word: "Livro", hints: ["Ler", "História", "Páginas", "Capa", "Saber"] },
+                    { word: "Jornal", hints: ["Notícia", "Papel", "Ler", "Manhã", "Antigo"] },
+                    { word: "Revista", hints: ["Ler", "Fotos", "Papel", "Capa", "Banca"] }
+                ]
+            },
+            {
+                category: "Celebridades",
+                items: [
+                    { word: "Neymar", hints: ["Futebol", "Brasil", "Cai", "Camisa 10", "PSG"] },
+                    { word: "Messi", hints: ["Futebol", "Argentina", "Baixinho", "Canhoto", "Melhor"] },
+                    { word: "Cristiano Ronaldo", hints: ["Futebol", "Portugal", "CR7", "Gol", "Músculo"] },
+                    { word: "Pelé", hints: ["Rei", "Futebol", "Brasil", "Mil gols", "Santos"] },
+                    { word: "Anitta", hints: ["Cantora", "Funk", "Brasil", "Dança", "Internacional"] },
+                    { word: "Ivete Sangalo", hints: ["Cantora", "Axé", "Carnaval", "Bahia", "Poeira"] },
+                    { word: "Gusttavo Lima", hints: ["Cantor", "Sertanejo", "Embaixador", "Tchê Tchê Rere", "Barba"] },
+                    { word: "Marília Mendonça", hints: ["Cantora", "Sertanejo", "Rainha", "Sofrência", "Infiel"] },
+                    { word: "Roberto Carlos", hints: ["Cantor", "Rei", "Natal", "Emoções", "Perna"] },
+                    { word: "Xuxa", hints: ["Rainha", "Baixinhos", "Nave", "Loira", "TV"] },
+                    { word: "Faustão", hints: ["Ô louco", "Domingo", "TV", "Gordo", "Relógio"] },
+                    { word: "Silvio Santos", hints: ["Dinheiro", "Aviãozinho", "SBT", "Domingo", "Risada"] },
+                    { word: "Luciano Huck", hints: ["Nariz", "TV", "Domingão", "Angélica", "Loucura"] },
+                    { word: "Gugu", hints: ["Pintinho Amarelinho", "Domingo", "TV", "Banheira", "Loira"] },
+                    { word: "Ana Maria Braga", hints: ["Louro José", "Cozinha", "Manhã", "Globo", "Acorda menina"] },
+                    { word: "Fátima Bernardes", hints: ["Jornal", "Encontro", "Bonner", "Manhã", "Globo"] },
+                    { word: "William Bonner", hints: ["Jornal Nacional", "Boa noite", "Terno", "Globo", "Sério"] },
+                    { word: "Galvão Bueno", hints: ["Narrador", "Futebol", "Haja coração", "Globo", "Voz"] },
+                    { word: "Casimiro", hints: ["Streamer", "Reage", "Meteu essa", "Vasco", "Gordo"] },
+                    { word: "Alok", hints: ["DJ", "Música", "Eletrônica", "Luzes", "Brasil"] },
+                    { word: "Whindersson Nunes", hints: ["Youtuber", "Piauí", "Humor", "Cabelo", "Luta"] },
+                    { word: "Felipe Neto", hints: ["Youtuber", "Cabelo colorido", "Coruja", "Irmão", "Vídeo"] },
+                    { word: "Juliette", hints: ["BBB", "Paraíba", "Cacto", "Maquiadora", "Cantora"] },
+                    { word: "Gil do Vigor", hints: ["BBB", "Tchaki Tchaki", "Economia", "Regozijo", "Basculho"] },
+                    { word: "BBB", hints: ["Casa", "Paredão", "Votação", "Espiã", "Globo"] },
+                    { word: "Lula", hints: ["Presidente", "Barba", "PT", "Dedo", "Brasil"] },
+                    { word: "Bolsonaro", hints: ["Presidente", "Mito", "Arma", "Direita", "Brasil"] },
+                    { word: "Obama", hints: ["Presidente", "EUA", "Negro", "Yes We Can", "Líder"] },
+                    { word: "Trump", hints: ["Presidente", "EUA", "Laranja", "Topete", "Rico"] },
+                    { word: "Rainha Elizabeth", hints: ["Inglaterra", "Coroa", "Velha", "Real", "Castelo"] },
+                    { word: "Papa Francisco", hints: ["Igreja", "Vaticano", "Argentino", "Branco", "Padre"] },
+                    { word: "Jesus", hints: ["Deus", "Cruz", "Natal", "Milagre", "Bíblia"] },
+                    { word: "Deus", hints: ["Céu", "Pai", "Criador", "Rezar", "Tudo"] },
+                    { word: "Diabo", hints: ["Inferno", "Chifre", "Vermelho", "Mal", "Tridente"] },
+                    { word: "Papai Noel", hints: ["Natal", "Presente", "Barba branca", "Vermelho", "Chaminé"] },
+                    { word: "Coelhinho da Páscoa", hints: ["Ovo", "Chocolate", "Orelhas", "Pular", "Esconder"] },
+                    { word: "Fada do Dente", hints: ["Dente", "Travesseiro", "Dinheiro", "Criança", "Asas"] },
+                    { word: "Mickey", hints: ["Rato", "Orelhas", "Disney", "Minnie", "Luvas"] },
+                    { word: "Bob Esponja", hints: ["Amarelo", "Calça Quadrada", "Fundo do mar", "Hambúrguer", "Patrick"] },
+                    { word: "Homem Aranha", hints: ["Herói", "Teia", "Vermelho", "Aranha", "Peter Parker"] },
+                    { word: "Batman", hints: ["Morcego", "Herói", "Preto", "Rico", "Gotham"] },
+                    { word: "Superman", hints: ["Herói", "Capa", "Voar", "Forte", "S"] },
+                    { word: "Mulher Maravilha", hints: ["Heroína", "Laço", "Forte", "Amazona", "Tiara"] },
+                    { word: "Goku", hints: ["Anime", "Cabelo", "Luta", "Kamehameha", "Esferas"] },
+                    { word: "Naruto", hints: ["Ninja", "Anime", "Laranja", "Raposa", "Aldeia"] },
+                    { word: "Pikachu", hints: ["Pokémon", "Amarelo", "Choque", "Raio", "Ash"] },
+                    { word: "Mario", hints: ["Jogo", "Bigode", "Encanador", "Vermelho", "Luigi"] },
+                    { word: "Sonic", hints: ["Porco-espinho", "Azul", "Rápido", "Argolas", "Jogo"] },
+                    { word: "Chaves", hints: ["Barril", "Vila", "SBT", "Sanduíche", "Isso isso isso"] },
+                    { word: "Chapolin", hints: ["Vermelho", "Marreta", "Antenas", "Herói", "Não contavam"] }
+                ]
+            },
+            {
+                category: "Jogos",
+                items: [
+                    { word: "Futebol", hints: ["Bola", "Gol", "Chute", "Campo", "Time"] },
+                    { word: "Vôlei", hints: ["Rede", "Mão", "Praia", "Manchete", "Cortada"] },
+                    { word: "Basquete", hints: ["Cesta", "Bola laranja", "Altura", "Quicar", "NBA"] },
+                    { word: "Tênis", hints: ["Raquete", "Bolinha", "Rede", "Guga", "Quadra"] },
+                    { word: "Natação", hints: ["Água", "Piscina", "Nadar", "Touca", "Olimpíada"] },
+                    { word: "Corrida", hints: ["Rápido", "Pés", "Cansar", "Chegada", "Maratona"] },
+                    { word: "Queimada", hints: ["Bola", "Acertar", "Fugir", "Escola", "Time"] },
+                    { word: "Esconde-Esconde", hints: ["Procurar", "Contar", "Esconder", "Bater cara", "Criança"] },
+                    { word: "Pega-Pega", hints: ["Correr", "Fugir", "Tocar", "Pegar", "Criança"] },
+                    { word: "Amarelinha", hints: ["Pular", "Chão", "Giz", "Céu", "Pedra"] },
+                    { word: "Pular Corda", hints: ["Pular", "Corda", "Girar", "Criança", "Música"] },
+                    { word: "Bolinha de Gude", hints: ["Vidro", "Chão", "Jogar", "Buraco", "Coleção"] },
+                    { word: "Pipa", hints: ["Voar", "Linha", "Vento", "Céu", "Rabiola"] },
+                    { word: "Pião", hints: ["Girar", "Corda", "Chão", "Madeira", "Brinquedo"] },
+                    { word: "Ioiô", hints: ["Sobe e desce", "Corda", "Dedo", "Girar", "Brinquedo"] },
+                    { word: "Videogame", hints: ["Controle", "TV", "Jogar", "Console", "Diversão"] },
+                    { word: "Celular", hints: ["Tela", "Jogar", "Touch", "Mão", "Vício"] },
+                    { word: "Computador", hints: ["Teclado", "Mouse", "Tela", "Online", "Jogar"] },
+                    { word: "Tabuleiro", hints: ["Mesa", "Peças", "Dados", "Jogar", "Família"] },
+                    { word: "Cartas", hints: ["Baralho", "Mão", "Naipe", "Jogar", "Mesa"] },
+                    { word: "Baralho", hints: ["Cartas", "Rei", "Ás", "Embaralhar", "Truco"] },
+                    { word: "Truco", hints: ["Gritar", "Cartas", "Zap", "Mesa", "Blefe"] },
+                    { word: "Uno", hints: ["Cartas", "Cores", "Bloqueio", "+4", "Amizade"] },
+                    { word: "Poker", hints: ["Aposta", "Dinheiro", "Cartas", "Blefe", "Fichas"] },
+                    { word: "Xadrez", hints: ["Rei", "Rainha", "Xeque-mate", "Pensar", "Tabuleiro"] },
+                    { word: "Dama", hints: ["Peças", "Pular", "Comer", "Tabuleiro", "Preto e branco"] },
+                    { word: "Dominó", hints: ["Peças", "Pontinhos", "Mesa", "Encaixar", "Dupla"] },
+                    { word: "Quebra-Cabeça", hints: ["Montar", "Peças", "Encaixar", "Imagem", "Difícil"] },
+                    { word: "Palavras Cruzadas", hints: ["Jornal", "Letras", "Escrever", "Quadrinhos", "Dica"] },
+                    { word: "Caça Palavras", hints: ["Letras", "Procurar", "Riscar", "Revista", "Escondido"] },
+                    { word: "Sudoku", hints: ["Números", "Quadrados", "Lógica", "Jornal", "Difícil"] },
+                    { word: "Forca", hints: ["Letra", "Palavra", "Boneco", "Enforcar", "Adivinhar"] },
+                    { word: "Adedonha", hints: ["Letra", "Mãos", "Papel", "Nome", "Stop"] },
+                    { word: "Mímica", hints: ["Sem falar", "Gestos", "Adivinhar", "Atuar", "Tempo"] },
+                    { word: "Imagem e Ação", hints: ["Desenhar", "Mímica", "Tabuleiro", "Adivinhar", "Tempo"] },
+                    { word: "Banco Imobiliário", hints: ["Dinheiro", "Comprar", "Casas", "Rico", "Tabuleiro"] },
+                    { word: "War", hints: ["Guerra", "Mapa", "Dados", "Exército", "Mundo"] },
+                    { word: "Detetive", hints: ["Crime", "Assassino", "Pistas", "Quem matou", "Tabuleiro"] },
+                    { word: "Jogo da Vida", hints: ["Carro", "Casar", "Filhos", "Trabalho", "Roleta"] },
+                    { word: "Perfil", hints: ["Dicas", "Adivinhar", "Pessoa", "Coisa", "Lugar"] },
+                    { word: "Cara a Cara", hints: ["Perguntas", "Rostos", "Adivinhar", "Abaixar", "Pessoa"] },
+                    { word: "Batalha Naval", hints: ["Navios", "Água", "Bomba", "Coordenada", "Afundar"] },
+                    { word: "Ludo", hints: ["Dados", "Cores", "Casa", "Tabuleiro", "Peças"] },
+                    { word: "Resta Um", hints: ["Peças", "Pular", "Sozinho", "Tabuleiro", "Buraco"] },
+                    { word: "Pula Pirata", hints: ["Espadas", "Barril", "Susto", "Pular", "Espetar"] },
+                    { word: "Cai Não Cai", hints: ["Varetas", "Bolinhas", "Tubo", "Tirar", "Cair"] },
+                    { word: "Jenga", hints: ["Torre", "Madeira", "Tirar", "Equilíbrio", "Cair"] },
+                    { word: "Twister", hints: ["Cores", "Mão", "Pé", "Chão", "Enrolado"] },
+                    { word: "Dança das Cadeiras", hints: ["Música", "Sentar", "Roda", "Falta uma", "Correr"] },
+                    { word: "Estátua", hints: ["Parar", "Música", "Mexer", "Posição", "Brincadeira"] }
+                ]
+            },
+            {
+                category: "Corpo e Saúde",
+                items: [
+                    { word: "Cabeça", hints: ["Pensar", "Cabelo", "Rosto", "Cérebro", "Topo"] },
+                    { word: "Cabelo", hints: ["Cabeça", "Pentear", "Cortar", "Longo", "Careca"] },
+                    { word: "Olho", hints: ["Ver", "Piscar", "Óculos", "Chorar", "Rosto"] },
+                    { word: "Nariz", hints: ["Cheiro", "Respirar", "Espirro", "Rosto", "Meio"] },
+                    { word: "Boca", hints: ["Falar", "Comer", "Beijo", "Dente", "Língua"] },
+                    { word: "Dente", hints: ["Morder", "Branco", "Escovar", "Sorriso", "Boca"] },
+                    { word: "Língua", hints: ["Gosto", "Lamber", "Boca", "Falar", "Vermelha"] },
+                    { word: "Ouvido", hints: ["Escutar", "Orelha", "Som", "Música", "Lado"] },
+                    { word: "Pescoço", hints: ["Garganta", "Colar", "Cabeça", "Girar", "Sustentar"] },
+                    { word: "Ombro", hints: ["Braço", "Carregar", "Largo", "Mochila", "Articulação"] },
+                    { word: "Braço", hints: ["Mão", "Abraço", "Força", "Músculo", "Cotovelo"] },
+                    { word: "Cotovelo", hints: ["Dobrar", "Braço", "Pontudo", "Osso", "Meio"] },
+                    { word: "Mão", hints: ["Dedos", "Pegar", "Tchau", "Palma", "Escrever"] },
+                    { word: "Dedo", hints: ["Mão", "Unha", "Apontar", "Anel", "Cinco"] },
+                    { word: "Unha", hints: ["Dedo", "Cortar", "Pintar", "Arranhar", "Dura"] },
+                    { word: "Peito", hints: ["Coração", "Respirar", "Frente", "Pulmão", "Tórax"] },
+                    { word: "Barriga", hints: ["Comida", "Umbigo", "Gordo", "Tanquinho", "Dor"] },
+                    { word: "Costas", hints: ["Atrás", "Coluna", "Dor", "Mochila", "Deitar"] },
+                    { word: "Perna", hints: ["Andar", "Correr", "Joelho", "Pé", "Calça"] },
+                    { word: "Joelho", hints: ["Dobrar", "Perna", "Cair", "Osso", "Meio"] },
+                    { word: "Pé", hints: ["Andar", "Sapato", "Chulé", "Dedos", "Chão"] },
+                    { word: "Coração", hints: ["Bater", "Amor", "Sangue", "Peito", "Vida"] },
+                    { word: "Pulmão", hints: ["Ar", "Respirar", "Peito", "Fôlego", "Dentro"] },
+                    { word: "Estômago", hints: ["Comida", "Fome", "Barriga", "Digestão", "Roncar"] },
+                    { word: "Cérebro", hints: ["Pensar", "Cabeça", "Inteligência", "Memória", "Comando"] },
+                    { word: "Sangue", hints: ["Vermelho", "Veia", "Coração", "Corte", "Vida"] },
+                    { word: "Osso", hints: ["Duro", "Esqueleto", "Quebrar", "Branco", "Corpo"] },
+                    { word: "Pele", hints: ["Corpo", "Tocar", "Arrepiar", "Suor", "Cobrir"] },
+                    { word: "Músculo", hints: ["Força", "Academia", "Carne", "Movimento", "Forte"] },
+                    { word: "Gordura", hints: ["Mole", "Barriga", "Peso", "Comida", "Dieta"] },
+                    { word: "Suor", hints: ["Calor", "Correr", "Água", "Cheiro", "Pele"] },
+                    { word: "Lágrima", hints: ["Chorar", "Olho", "Triste", "Água", "Cair"] },
+                    { word: "Saliva", hints: ["Boca", "Cuspir", "Água", "Beijo", "Comer"] },
+                    { word: "Xixi", hints: ["Banheiro", "Amarelo", "Vontade", "Água", "Privada"] },
+                    { word: "Cocô", hints: ["Banheiro", "Fedido", "Privada", "Papel", "Barriga"] },
+                    { word: "Pum", hints: ["Cheiro ruim", "Barulho", "Bunda", "Gás", "Segurar"] },
+                    { word: "Arroto", hints: ["Boca", "Barulho", "Comer", "Gás", "Refrigerante"] },
+                    { word: "Espirro", hints: ["Nariz", "Saúde", "Gripe", "Alergia", "Barulho"] },
+                    { word: "Tosse", hints: ["Garganta", "Barulho", "Gripe", "Engasgar", "Doente"] },
+                    { word: "Soluço", hints: ["Susto", "Pulo", "Água", "Parar", "Chato"] },
+                    { word: "Bocejo", hints: ["Sono", "Boca aberta", "Cansado", "Dormir", "Contagia"] },
+                    { word: "Sono", hints: ["Dormir", "Cama", "Noite", "Cansado", "Sonhar"] },
+                    { word: "Fome", hints: ["Comer", "Barriga", "Almoço", "Vontade", "Roncar"] },
+                    { word: "Sede", hints: ["Água", "Beber", "Seca", "Calor", "Garganta"] },
+                    { word: "Dor", hints: ["Machucado", "Chorar", "Remédio", "Sentir", "Ai"] },
+                    { word: "Febre", hints: ["Quente", "Doente", "Termômetro", "Cama", "Testa"] },
+                    { word: "Gripe", hints: ["Doente", "Nariz", "Espirro", "Cama", "Vírus"] },
+                    { word: "Resfriado", hints: ["Nariz", "Espirro", "Leve", "Lenço", "Frio"] },
+                    { word: "Machucado", hints: ["Sangue", "Dor", "Curativo", "Cair", "Ferida"] },
+                    { word: "Cicatriz", hints: ["Marca", "Antigo", "Pele", "Corte", "História"] }
+                ]
+            },
+            {
+                category: "Escola e Educação",
+                items: [
+                    { word: "Professor", hints: ["Ensina", "Lousa", "Sala", "Mestre", "Aprender"] },
+                    { word: "Aluno", hints: ["Estuda", "Sala", "Aprender", "Criança", "Escola"] },
+                    { word: "Diretor", hints: ["Chefe", "Sala", "Manda", "Escola", "Conversa"] },
+                    { word: "Sala de Aula", hints: ["Carteiras", "Lousa", "Estudar", "Alunos", "Lugar"] },
+                    { word: "Lousa", hints: ["Escrever", "Giz", "Parede", "Verde", "Apagar"] },
+                    { word: "Giz", hints: ["Escrever", "Branco", "Pó", "Lousa", "Professor"] },
+                    { word: "Apagador", hints: ["Limpar", "Lousa", "Pó", "Giz", "Madeira"] },
+                    { word: "Carteira", hints: ["Sentar", "Mesa", "Escrever", "Madeira", "Sala"] },
+                    { word: "Cadeira", hints: ["Sentar", "Sala", "Mesa", "Aluno", "Lugar"] },
+                    { word: "Mesa", hints: ["Professor", "Escrever", "Apoiar", "Sala", "Madeira"] },
+                    { word: "Mochila", hints: ["Costas", "Guardar", "Livros", "Zíper", "Levar"] },
+                    { word: "Estojo", hints: ["Lápis", "Guardar", "Zíper", "Caneta", "Pequeno"] },
+                    { word: "Lápis", hints: ["Escrever", "Grafite", "Apagar", "Apontar", "Cinza"] },
+                    { word: "Caneta", hints: ["Escrever", "Tinta", "Azul", "Não apaga", "Tubo"] },
+                    { word: "Borracha", hints: ["Apagar", "Erro", "Branca", "Lápis", "Esfregar"] },
+                    { word: "Apontador", hints: ["Lápis", "Ponta", "Girar", "Lixo", "Afiar"] },
+                    { word: "Régua", hints: ["Medir", "Reta", "Linha", "Plástico", "Números"] },
+                    { word: "Tesoura", hints: ["Cortar", "Papel", "Sem ponta", "Colar", "Mão"] },
+                    { word: "Cola", hints: ["Grudar", "Líquida", "Branca", "Papel", "Sujar"] },
+                    { word: "Caderno", hints: ["Escrever", "Folhas", "Linhas", "Espiral", "Matéria"] },
+                    { word: "Livro", hints: ["Ler", "Estudar", "Páginas", "Matéria", "Texto"] },
+                    { word: "Agenda", hints: ["Datas", "Anotar", "Recado", "Pais", "Dia"] },
+                    { word: "Prova", hints: ["Nota", "Difícil", "Estudar", "Teste", "Silêncio"] },
+                    { word: "Nota", hints: ["Boletim", "Vermelha", "Azul", "Dez", "Valor"] },
+                    { word: "Boletim", hints: ["Notas", "Pais", "Bimestre", "Passar", "Papel"] },
+                    { word: "Lição de Casa", hints: ["Fazer", "Tarde", "Estudar", "Sozinho", "Caderno"] },
+                    { word: "Trabalho", hints: ["Grupo", "Apresentar", "Cartolina", "Nota", "Pesquisa"] },
+                    { word: "Recreio", hints: ["Intervalo", "Brincar", "Lanche", "Correr", "Pátio"] },
+                    { word: "Lanche", hints: ["Comer", "Recreio", "Merendeira", "Fome", "Trazer"] },
+                    { word: "Merenda", hints: ["Comida", "Escola", "Fila", "Prato", "Recreio"] },
+                    { word: "Cantina", hints: ["Comprar", "Lanche", "Salgado", "Fila", "Dinheiro"] },
+                    { word: "Banheiro", hints: ["Xixi", "Pedir", "Sair", "Lavar mão", "Espelho"] },
+                    { word: "Bebedouro", hints: ["Água", "Sede", "Fila", "Gelada", "Garrafa"] },
+                    { word: "Quadra", hints: ["Esporte", "Jogar", "Educação Física", "Bola", "Correr"] },
+                    { word: "Educação Física", hints: ["Esporte", "Correr", "Quadra", "Roupa", "Jogar"] },
+                    { word: "Artes", hints: ["Pintar", "Desenhar", "Tinta", "Papel", "Criar"] },
+                    { word: "Música", hints: ["Cantar", "Tocar", "Som", "Instrumento", "Aula"] },
+                    { word: "Inglês", hints: ["Língua", "Outro país", "Falar", "Verbo", "Hello"] },
+                    { word: "Matemática", hints: ["Números", "Conta", "Somar", "Difícil", "Problema"] },
+                    { word: "Português", hints: ["Ler", "Escrever", "Gramática", "Texto", "Língua"] },
+                    { word: "História", hints: ["Passado", "Antigo", "Datas", "Guerras", "Tempo"] },
+                    { word: "Geografia", hints: ["Mapa", "Mundo", "Países", "Terra", "Lugar"] },
+                    { word: "Ciências", hints: ["Natureza", "Corpo", "Experiência", "Animais", "Vida"] },
+                    { word: "Física", hints: ["Fórmulas", "Movimento", "Difícil", "Força", "Energia"] },
+                    { word: "Química", hints: ["Mistura", "Laboratório", "Explosão", "Tabela", "Elementos"] },
+                    { word: "Biologia", hints: ["Vida", "Célula", "Animais", "Plantas", "Corpo"] },
+                    { word: "Redação", hints: ["Escrever", "Texto", "História", "Tema", "Caneta"] },
+                    { word: "Ditado", hints: ["Ouvir", "Escrever", "Palavras", "Professor", "Erro"] },
+                    { word: "Chamada", hints: ["Nome", "Presente", "Falta", "Lista", "Responder"] },
+                    { word: "Férias", hints: ["Descanso", "Sem aula", "Viagem", "Janeiro", "Julho"] }
+                ]
+            },
+            {
+                category: "Amor e Romance",
+                items: [
+                    { word: "Beijo", hints: ["Boca", "Carinho", "Lábios", "Amor", "Toque"] },
+                    { word: "Abraço", hints: ["Braços", "Apertar", "Carinho", "Perto", "Envolver"] },
+                    { word: "Carinho", hints: ["Mão", "Afeto", "Gostar", "Suave", "Pele"] },
+                    { word: "Mãos Dadas", hints: ["Juntos", "Andar", "Segurar", "Dedos", "União"] },
+                    { word: "Namoro", hints: ["Casal", "Juntos", "Compromisso", "Pedido", "Relacionamento"] },
+                    { word: "Casamento", hints: ["Noiva", "Igreja", "Festa", "Sim", "União"] },
+                    { word: "Noivado", hints: ["Pedido", "Anel", "Antes", "Casar", "Compromisso"] },
+                    { word: "Lua de Mel", hints: ["Viagem", "Casados", "Hotel", "Romance", "Depois"] },
+                    { word: "Aliança", hints: ["Dedo", "Ouro", "Círculo", "Compromisso", "Símbolo"] },
+                    { word: "Anel", hints: ["Dedo", "Joia", "Presente", "Brilhante", "Mão"] },
+                    { word: "Vestido de Noiva", hints: ["Branco", "Casamento", "Longo", "Véu", "Mulher"] },
+                    { word: "Terno", hints: ["Homem", "Elegante", "Casamento", "Gravata", "Roupa"] },
+                    { word: "Buquê", hints: ["Flores", "Jogar", "Noiva", "Pegar", "Sorte"] },
+                    { word: "Bolo", hints: ["Festa", "Doce", "Cortar", "Noivos", "Comer"] },
+                    { word: "Festa", hints: ["Comemorar", "Dança", "Música", "Convidados", "Alegria"] },
+                    { word: "Convite", hints: ["Papel", "Chamar", "Data", "Entregar", "Nome"] },
+                    { word: "Padrinho", hints: ["Amigo", "Altar", "Testemunha", "Homem", "Par"] },
+                    { word: "Madrinha", hints: ["Amiga", "Altar", "Vestido", "Mulher", "Par"] },
+                    { word: "Igreja", hints: ["Casamento", "Altar", "Padre", "Cerimônia", "Entrada"] },
+                    { word: "Padre", hints: ["Casamento", "Igreja", "Abençoar", "Falar", "Bata"] },
+                    { word: "Juiz", hints: ["Casamento", "Civil", "Lei", "Assinar", "Cartório"] },
+                    { word: "Cartório", hints: ["Papel", "Assinar", "Casamento", "Civil", "Lugar"] },
+                    { word: "Certidão", hints: ["Papel", "Prova", "Casamento", "Documento", "Assinatura"] },
+                    { word: "Divórcio", hints: ["Separar", "Fim", "Assinar", "Triste", "Ex"] },
+                    { word: "Separação", hints: ["Acabou", "Longe", "Dividir", "Casas", "Fim"] },
+                    { word: "Traição", hints: ["Outra", "Mentira", "Enganar", "Triste", "Infiel"] },
+                    { word: "Ciúmes", hints: ["Medo", "Perder", "Posse", "Desconfiar", "Sentimento"] },
+                    { word: "Saudade", hints: ["Falta", "Longe", "Lembrar", "Querer", "Distância"] },
+                    { word: "Paixão", hints: ["Forte", "Início", "Coração", "Fogo", "Intenso"] },
+                    { word: "Amor", hints: ["Coração", "Gostar", "Sentimento", "Vida", "Eterno"] },
+                    { word: "Coração", hints: ["Bater", "Símbolo", "Vermelho", "Peito", "Amor"] },
+                    { word: "Cupido", hints: ["Anjo", "Flecha", "Amor", "Juntar", "Mito"] },
+                    { word: "Flecha", hints: ["Cupido", "Acertar", "Coração", "Amor", "Ponta"] },
+                    { word: "Dia dos Namorados", hints: ["Data", "Presente", "Junho", "Jantar", "Casal"] },
+                    { word: "Presente", hints: ["Dar", "Caixa", "Surpresa", "Gostar", "Laço"] },
+                    { word: "Flores", hints: ["Rosas", "Cheiro", "Dar", "Buquê", "Romântico"] },
+                    { word: "Chocolate", hints: ["Doce", "Caixa", "Presente", "Coração", "Comer"] },
+                    { word: "Jantar", hints: ["Comer", "Noite", "Vela", "Restaurante", "Romântico"] },
+                    { word: "Cinema", hints: ["Filme", "Escuro", "Mãos dadas", "Pipoca", "Encontro"] },
+                    { word: "Viagem", hints: ["Passear", "Longe", "Juntos", "Mala", "Lugar"] },
+                    { word: "Hotel", hints: ["Quarto", "Cama", "Dormir", "Viagem", "Lugar"] },
+                    { word: "Motel", hints: ["Adulto", "Noite", "Namorados", "Escondido", "Lugar"] },
+                    { word: "Cama", hints: ["Dormir", "Deitar", "Juntos", "Lençol", "Quarto"] },
+                    { word: "Edredom", hints: ["Cobrir", "Frio", "Esconder", "Cama", "Quente"] },
+                    { word: "Travesseiro", hints: ["Cabeça", "Dormir", "Macio", "Cama", "Abraçar"] },
+                    { word: "Sonho", hints: ["Dormir", "Imaginar", "Futuro", "Desejo", "Noite"] },
+                    { word: "Carta", hints: ["Escrever", "Papel", "Ler", "Amor", "Correio"] },
+                    { word: "Poema", hints: ["Rima", "Bonito", "Ler", "Palavras", "Verso"] },
+                    { word: "Música", hints: ["Ouvir", "Romântica", "Dançar", "Letra", "Som"] },
+                    { word: "Declaração", hints: ["Falar", "Sentimento", "Coragem", "Dizer", "Amor"] }
+                ]
+            },
+            { 
+                category: "Objetos", 
+                items: [
+                    { word: "Relógio", hints: ["Marca tempo", "No pulso", "Olha sempre", "Atraso"] },
+                    { word: "Guarda-chuva", hints: ["Chuva", "Esquece", "Abre e fecha", "Molhado"] },
+                    { word: "Espelho", hints: ["Se ver", "Banheiro", "Azar", "Reflexo"] },
+                    { word: "Cadeira", hints: ["Sentar", "Mesa", "Descanso", "Pernas"] },
+                    { word: "Telefone", hints: ["Usa sempre", "Bolso", "Vício", "Comunica"] },
+                    { word: "Livro", hints: ["História", "Ler", "Imaginar", "Papel"] },
+                    { word: "Computador", hints: ["Trabalho", "Tela", "Internet", "Digitar"] }
+                ]
+            }
+        ];
+
+        // --- Icons ---
+        const IconUserPlus = ({size=20}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" x2="20" y1="8" y2="14"/><line x1="23" x2="17" y1="11" y2="11"/></svg>;
+        const IconTrash = ({size=20}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>;
+        const IconEye = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const IconCrown = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>;
+        const IconArrowLeft = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>;
+        const IconPencil = ({size=20}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>;
+        const IconCheck = ({size=20}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>;
+        const IconX = ({size=20}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+
+
+        // --- Animations ---
+        const pageTransition = {
+            initial: { opacity: 0, y: 8 },
+            animate: { opacity: 1, y: 0 },
+            exit: { opacity: 0, y: -8 },
+            transition: { type: "spring", stiffness: 300, damping: 30 }
+        };
+
+        const listVariants = {
+            hidden: {},
+            visible: {
+                transition: { staggerChildren: 0.04 }
+            }
+        };
+
+        const itemVariants = {
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 25 } },
+            exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
+        };
+
+        // --- Common Components ---
+
+        const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, icon: Icon }) => {
+            const baseStyles = "w-full h-14 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 transition-all duration-200 relative overflow-hidden";
+            const variants = {
+                primary: "bg-primary text-white shadow-glow-primary hover:bg-primary-hover",
+                danger: "bg-danger text-white shadow-glow-danger hover:bg-red-600",
+                ghost: "bg-white/5 text-white border border-white/10 hover:bg-white/10",
+                success: "bg-success text-white hover:bg-emerald-600"
+            };
+
+            return (
+                <motion.button 
+                    whileTap={disabled ? {} : { scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    onClick={disabled ? undefined : onClick} 
+                    disabled={disabled}
+                    className={`${baseStyles} ${variants[variant]} ${disabled ? 'opacity-40 cursor-not-allowed' : 'active:scale-[0.97]'} ${className}`}
+                >
+                    {Icon && <Icon size={18} className="opacity-90" />}
+                    {children}
+                </motion.button>
+            );
+        };
+
+        const AppHeader = ({ title, subtitle, showBack, onBack }) => (
+            <header className="relative w-full flex items-center justify-center h-14 mb-4 px-4 flex-shrink-0">
+                {showBack && (
+                    <motion.button 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={onBack}
+                        className="absolute left-2 p-2 text-neutral-400 hover:text-white rounded-xl transition-colors"
+                    >
+                        <IconArrowLeft size={22} />
+                    </motion.button>
+                )}
+                <div className="flex flex-col items-center">
+                    <motion.h1 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="text-2xl font-bold tracking-tight text-white"
+                    >
+                        {title}
+                    </motion.h1>
+                    {subtitle && (
+                        <motion.span 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-xs font-semibold text-primary uppercase tracking-[0.15em] mt-1"
+                        >
+                            {subtitle}
+                        </motion.span>
+                    )}
+                </div>
+            </header>
+        );
+
+        // --- Sub-Components ---
+
+        // Independent Player Row Logic to isolate edit state
+        const PlayerRow = ({ player, index, isDeleteMode, onUpdate, onDelete, isEditing, onSetEditing, onCancelEditing }) => {
+            const [tempName, setTempName] = useState(player.name);
+            const inputRef = useRef(null);
+
+            useEffect(() => {
+                if (isEditing && inputRef.current) {
+                    inputRef.current.focus();
+                    inputRef.current.select();
+                }
+            }, [isEditing]);
+
+            const handleSave = () => {
+                onUpdate(player.id, tempName.trim());
+                onCancelEditing();
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                    setTempName(player.name);
+                    onCancelEditing();
+                }
+            };
+
+            return (
+                <motion.div 
+                    layout="position"
+                    layoutId={`player-${player.id}`}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className={`
+                        relative overflow-hidden rounded-xl border transition-colors duration-200
+                        ${isEditing 
+                            ? 'bg-surfaceHover border-primary/40' 
+                            : 'bg-surface/80 border-white/5 active:bg-surfaceHover'
+                        }
+                    `}
+                >
+                    <div className="flex items-center justify-between p-4 h-16">
+                        {isEditing ? (
+                            <div className="flex items-center w-full gap-2">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={tempName}
+                                    onChange={(e) => setTempName(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onBlur={handleSave}
+                                    placeholder="Nome do jogador"
+                                    maxLength={20}
+                                    className="flex-1 bg-transparent text-lg text-white font-medium placeholder-neutral-500 border-none outline-none min-w-0"
+                                />
+                                <motion.button 
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={handleSave}
+                                    className="p-2.5 bg-success/15 text-success rounded-lg flex-shrink-0"
+                                >
+                                    <IconCheck size={20} />
+                                </motion.button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-4 min-w-0 flex-1">
+                                    <span className="text-sm font-bold text-neutral-600 w-6 flex-shrink-0">{index + 1}</span>
+                                    <span className={`text-lg font-medium truncate ${player.name ? 'text-white' : 'text-neutral-500 italic'}`}>
+                                        {player.name || "Sem nome"}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    {isDeleteMode ? (
+                                        <motion.button 
+                                            initial={{ scale: 0 }} 
+                                            animate={{ scale: 1 }}
+                                            whileTap={{ scale: 0.85 }}
+                                            onClick={() => onDelete(player.id)}
+                                            className="p-2.5 bg-danger/15 text-danger rounded-lg"
+                                        >
+                                            <IconTrash size={20} />
+                                        </motion.button>
+                                    ) : (
+                                        <motion.button
+                                            whileTap={{ scale: 0.85 }}
+                                            onClick={() => { setTempName(player.name); onSetEditing(player.id); }}
+                                            className="p-2.5 text-neutral-500 hover:text-white rounded-lg"
+                                        >
+                                            <IconPencil size={20} />
+                                        </motion.button>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </motion.div>
+            );
+        };
+
+        // --- Screens ---
+
+        const ScreenSetup = ({ players, setPlayers, impostorCount, setImpostorCount, useHints, setUseHints, startRound }) => {
+            const [isDeleteMode, setIsDeleteMode] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const listRef = useRef(null);
+
+            // Auto-disable delete mode if list is empty
+            useEffect(() => {
+                if (players.length === 0) setIsDeleteMode(false);
+            }, [players.length]);
+
+            // Always recalculate validPlayers after any change
+            const validPlayers = React.useMemo(() => players.filter(p => p.name.trim().length > 0).length, [players]);
+
+            const handleAddPlayer = () => {
+                const newId = Date.now() + Math.floor(Math.random() * 10000); // avoid duplicate ids
+                setPlayers(prev => [...prev, { id: newId, name: '' }]);
+                setEditingId(newId);
+                setIsDeleteMode(false);
+                setTimeout(() => {
+                    if (listRef.current) {
+                        listRef.current.scrollTop = listRef.current.scrollHeight;
+                    }
+                }, 100);
+            };
+
+            const handleUpdatePlayer = (id, newName) => {
+                setPlayers(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
+            };
+
+            const handleDeletePlayer = (id) => {
+                setPlayers(prev => prev.filter(p => p.id !== id));
+                setEditingId(null); // exit edit mode if player deleted
+            };
+
+            return (
+                <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 overflow-hidden">
+                    <AppHeader title="Impostor" subtitle="Nova Partida" showBack={false} />
+
+                    <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar pb-40 space-y-4 scroll-smooth">
+                        
+                        {/* Configuration Card */}
+                        <div className="glass-panel p-4 rounded-2xl space-y-3">
+                            {/* Impostor Count */}
+                            <div className="flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-base font-semibold text-white">Impostores</span>
+                                    <span className="text-sm text-neutral-500">
+                                        {validPlayers < 3 
+                                            ? "Adicione jogadores primeiro" 
+                                            : impostorCount >= validPlayers 
+                                                ? "Máximo atingido" 
+                                                : `Máximo: ${validPlayers - 1}`
+                                        }
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-0.5 bg-black/40 rounded-xl p-1">
+                                    <motion.button 
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => setImpostorCount(Math.max(1, impostorCount-1))} 
+                                        disabled={impostorCount <= 1}
+                                        className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-medium ${impostorCount <= 1 ? 'text-white/20' : 'text-white/60'}`}
+                                    >−</motion.button>
+                                    <span className="font-bold w-8 text-center text-white text-xl">{impostorCount}</span>
+                                    <motion.button 
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => setImpostorCount(Math.min(Math.max(1, validPlayers - 1), impostorCount+1))} 
+                                        disabled={validPlayers < 3 || impostorCount >= validPlayers - 1}
+                                        className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-medium ${validPlayers < 3 || impostorCount >= validPlayers - 1 ? 'text-white/20' : 'text-white/60'}`}
+                                    >+</motion.button>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-white/5 w-full"></div>
+
+                            {/* Hint Toggle */}
+                            <motion.div 
+                                whileTap={{ scale: 0.98 }}
+                                className="flex justify-between items-center cursor-pointer" 
+                                onClick={() => setUseHints(!useHints)}
+                            >
+                                <div className="flex flex-col">
+                                    <span className="text-base font-semibold text-white">Dicas Contextuais</span>
+                                    <span className="text-sm text-neutral-500">Ajuda extra para o impostor</span>
+                                </div>
+                                <div className={`w-14 h-8 rounded-full transition-all duration-200 relative ${useHints ? 'bg-primary' : 'bg-white/10'}`}>
+                                    <motion.div 
+                                        layout
+                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                        className={`absolute top-1.5 w-5 h-5 rounded-full bg-white shadow-sm ${useHints ? 'left-8' : 'left-1.5'}`} 
+                                    />
+                                </div>
+                            </motion.div>
+                        </div>
+
+                        {/* Player Management Header */}
+                        <div className="flex justify-between items-center px-1">
+                            <span className="text-sm font-bold text-neutral-500 uppercase tracking-wider">Jogadores ({players.length})</span>
+                            
+                            {players.length > 0 && (
+                                <motion.button 
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        setIsDeleteMode(!isDeleteMode);
+                                        setEditingId(null);
+                                    }}
+                                    className={`text-sm font-bold px-3 py-1.5 rounded-full transition-colors ${isDeleteMode ? 'bg-white text-black' : 'text-danger'}`}
+                                >
+                                    {isDeleteMode ? 'OK' : 'Remover'}
+                                </motion.button>
+                            )}
+                        </div>
+
+                        {/* Player List */}
+                        <motion.div 
+                            variants={listVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="space-y-2"
+                        >
+                            <AnimatePresence initial={false} mode="popLayout">
+                                {players.map((p, idx) => (
+                                    <PlayerRow 
+                                        key={p.id} 
+                                        player={p} 
+                                        index={idx}
+                                        isDeleteMode={isDeleteMode}
+                                        isEditing={editingId === p.id}
+                                        onUpdate={handleUpdatePlayer}
+                                        onDelete={handleDeletePlayer}
+                                        onSetEditing={(id) => {
+                                            setEditingId(id);
+                                            setIsDeleteMode(false);
+                                        }}
+                                        onCancelEditing={() => setEditingId(null)}
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+
+                        <motion.button 
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleAddPlayer} 
+                            className="w-full py-4 rounded-xl border border-dashed border-white/10 text-neutral-400 text-base font-medium flex items-center justify-center gap-3 active:bg-white/5"
+                        >
+                            <IconUserPlus size={20} />
+                            <span>Adicionar Jogador</span>
+                        </motion.button>
+                    </div>
+
+                    {/* Footer Action */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-20 safe-area-bottom">
+                        <AnimatePresence mode="wait">
+                            {validPlayers < 3 && (
+                                <motion.div 
+                                    key="error-msg"
+                                    initial={{ opacity: 0, y: 6, height: 0 }}
+                                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                                    exit={{ opacity: 0, y: 4, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="mb-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center gap-3 overflow-hidden"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                                    <span className="text-sm text-amber-300 font-medium">
+                                        {players.length === 0 
+                                            ? "Adicione pelo menos 3 jogadores" 
+                                            : validPlayers === 0 
+                                                ? "Dê nomes aos jogadores"
+                                                : `Falta${3 - validPlayers > 1 ? 'm' : ''} ${3 - validPlayers} jogador${3 - validPlayers > 1 ? 'es' : ''}`
+                                        }
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <Button 
+                            onClick={startRound} 
+                            disabled={validPlayers < 3} 
+                            variant="primary"
+                        >
+                            {validPlayers < 3 ? `Mínimo 3 (${validPlayers}/3)` : `Iniciar (${validPlayers})`}
+                        </Button>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ScreenDistribute = ({ roundData, viewedPlayers, initiateCardView, setGameState, onBack }) => {
+            const allViewed = roundData.players.every(p => viewedPlayers.has(p.id));
+            
+            return (
+                <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 overflow-hidden">
+                    <AppHeader title="Identidade" subtitle="Passe o Dispositivo" showBack={true} onBack={onBack} />
+                    
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-28">
+                        <div className="grid grid-cols-2 gap-3 content-start">
+                            {roundData.players.map((p, i) => {
+                                const isViewed = viewedPlayers.has(p.id);
+                                return (
+                                    <motion.button
+                                        key={p.id}
+                                        variants={itemVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        whileTap={!isViewed ? { scale: 0.95 } : {}}
+                                        onClick={() => initiateCardView(p)}
+                                        disabled={isViewed}
+                                        className={`
+                                            relative p-4 h-28 rounded-2xl flex flex-col items-center justify-center text-center transition-colors duration-200 border
+                                            ${isViewed 
+                                                ? 'bg-surface/40 border-white/5 opacity-60' 
+                                                : 'bg-surface border-white/10 active:bg-surfaceHover'
+                                            }
+                                        `}
+                                    >
+                                        <span className={`font-semibold text-lg leading-tight mb-2 w-full truncate px-1 ${isViewed ? 'line-through text-neutral-500' : 'text-white'}`}>
+                                            {p.name}
+                                        </span>
+                                        
+                                        {isViewed ? (
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-success"></div>
+                                                <span className="text-xs font-bold text-success uppercase">Visto</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs font-bold text-primary uppercase">Toque</span>
+                                        )}
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-20 safe-area-bottom">
+                        <AnimatePresence mode="wait">
+                            {allViewed ? (
+                                <motion.div 
+                                    key="start-btn"
+                                    initial={{ y: 10, opacity: 0 }} 
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                >
+                                    <Button variant="success" onClick={() => setGameState('READY')}>Começar Rodada</Button>
+                                </motion.div>
+                            ) : (
+                                <motion.div 
+                                    key="waiting"
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="text-center py-3"
+                                >
+                                    <p className="text-sm text-neutral-500">{viewedPlayers.size}/{roundData.players.length} jogadores viram suas cartas</p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ScreenCardView = ({ viewingPlayer, roundData, viewedPlayers, useHints, finishViewingCard, onBack }) => {
+            const isImpostor = roundData.impostorIds.has(viewingPlayer.id);
+            const isLastPlayer = viewedPlayers.size === roundData.players.length - 1;
+            const [flipped, setFlipped] = useState(false);
+            const [isFlipping, setIsFlipping] = useState(false);
+
+            const handleFlip = () => {
+                if (isFlipping || flipped) return;
+                setIsFlipping(true);
+                setTimeout(() => {
+                    setFlipped(true);
+                    setIsFlipping(false);
+                    if (navigator.vibrate) navigator.vibrate(30);
+                }, 60); 
+            };
+
+            return (
+                <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 items-center justify-center overflow-hidden">
+                    
+                    <motion.button 
+                        whileTap={{ scale: 0.9 }}
+                        onClick={onBack} 
+                        className="absolute top-4 left-4 z-50 p-2 text-neutral-400"
+                    >
+                        <IconArrowLeft size={22}/>
+                    </motion.button>
+
+                    <div className="absolute top-14 left-0 right-0 text-center z-10 pointer-events-none px-4">
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider block mb-1">Jogador</span>
+                            <h2 className="text-3xl font-bold text-white truncate">{viewingPlayer.name}</h2>
+                        </motion.div>
+                    </div>
+
+                    <div className="perspective-container w-full max-w-[300px] aspect-[3/4] relative z-20" onClick={handleFlip}>
+                        <motion.div 
+                            className="w-full h-full transform-style-3d relative cursor-pointer"
+                            initial={false}
+                            animate={{ rotateY: flipped ? 180 : 0 }}
+                            transition={{ type: "spring", stiffness: 280, damping: 28 }}
+                        >
+                            {/* FRONT FACE */}
+                            <div className="absolute inset-0 backface-hidden bg-surface rounded-3xl border border-white/10 flex flex-col items-center justify-center p-8 overflow-hidden">
+                                <motion.div animate={{ scale: isFlipping ? 0.9 : 1 }} className="w-24 h-24 rounded-full bg-surfaceHover border border-white/10 flex items-center justify-center mb-6">
+                                    <IconEye size={40} className="text-primary" />
+                                </motion.div>
+                                <h3 className="text-xl font-bold text-white mb-2">Toque para Revelar</h3>
+                                <p className="text-neutral-500 text-sm">Mantenha em segredo</p>
+                            </div>
+
+                            {/* BACK FACE */}
+                            <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-3xl flex flex-col items-center justify-center p-6 text-center border overflow-hidden ${isImpostor ? 'bg-surface border-danger/30' : 'bg-surface border-primary/30'}`}>
+                                <div className="absolute top-0 left-0 right-0 py-5 bg-gradient-to-b from-black/50 to-transparent">
+                                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider block">Categoria</span>
+                                    <span className="text-lg font-bold text-white">{roundData.category}</span>
+                                </div>
+
+                                {isImpostor ? (
+                                    <div className="flex flex-col items-center justify-center w-full pt-10">
+                                        <div className="w-16 h-16 mb-5 rounded-full bg-danger/15 flex items-center justify-center text-danger">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        </div>
+                                        <h3 className="text-3xl font-black text-danger uppercase tracking-wide mb-5">Impostor</h3>
+                                        {useHints ? (
+                                            <div className="w-full bg-danger/5 border border-danger/10 rounded-xl p-4">
+                                                <span className="text-xs font-bold text-danger/70 uppercase tracking-wider block mb-1">Dica</span>
+                                                <p className="text-base font-semibold text-white">"{roundData.hint}"</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-neutral-400 text-sm px-2">Você não sabe a palavra.<br/>Engane os outros.</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center w-full pt-10">
+                                        <span className="text-xs font-bold text-primary uppercase tracking-wider mb-4 px-3 py-1 rounded-full bg-primary/10">Tripulante</span>
+                                        <span className="text-neutral-500 text-xs uppercase tracking-wider mb-3">Palavra Secreta</span>
+                                        <h3 className="text-4xl font-black text-white leading-tight break-words w-full">{roundData.word}</h3>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-20 safe-area-bottom pointer-events-none">
+                        <AnimatePresence>
+                            {flipped && (
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="pointer-events-auto">
+                                    <Button onClick={finishViewingCard} variant={isLastPlayer ? 'success' : 'primary'}>
+                                        {isLastPlayer ? 'Iniciar Jogo' : 'Próximo'}
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ScreenReady = ({ roundData, setGameState, onBack }) => {
+            const starterName = roundData.players.find(p => p.id === roundData.startingPlayerId)?.name;
+            return (
+                <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 items-center justify-center text-center overflow-hidden">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="absolute top-4 left-4 z-50 p-2 text-neutral-400">
+                        <IconArrowLeft size={22}/>
+                    </motion.button>
+                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 250 }} className="relative z-10 mb-8">
+                        <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center border border-yellow-500/30">
+                            <IconCrown size={44} className="text-yellow-400" />
+                        </div>
+                    </motion.div>
+                    <div className="relative z-10 space-y-5 mb-10">
+                        <div>
+                            <span className="text-sm font-bold text-neutral-500 uppercase tracking-wider block mb-2">Primeiro a Falar</span>
+                            <h1 className="text-4xl font-black text-white tracking-tight">{starterName}</h1>
+                        </div>
+                        <p className="text-neutral-400 text-base max-w-[280px] mx-auto">Descreva a palavra. O Impostor deve mentir para se encaixar.</p>
+                    </div>
+                    <div className="w-full relative z-20 px-2">
+                        <Button onClick={() => setGameState('PLAYING')} variant="primary">Começar</Button>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ScreenPlaying = ({ roundData, setGameState, onBack }) => (
+            <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 overflow-hidden">
+                <div className="flex items-center justify-between pt-4 mb-4">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 text-neutral-400">
+                        <IconArrowLeft size={24}/>
+                    </motion.button>
+                    <div className="px-4 py-2 rounded-full bg-surface border border-white/10 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                        <span className="text-sm font-bold text-neutral-300 uppercase tracking-wider">{roundData.category}</span>
+                    </div>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center relative">
+                    <div className="absolute w-56 h-56 rounded-full border border-dashed border-white/10 animate-spin-slow pointer-events-none"></div>
+                    <div className="relative z-10 space-y-4">
+                        <h3 className="text-2xl font-bold text-white">Debate em Curso</h3>
+                        <p className="text-neutral-400 text-base px-4 max-w-[280px] mx-auto">Analise as dicas. Identifique quem está mentindo.</p>
+                    </div>
+                </div>
+                <div className="pb-4 safe-area-bottom">
+                    <Button variant="danger" onClick={() => setGameState('REVEAL')}>Revelar</Button>
+                </div>
+            </motion.div>
+        );
+
+        const ScreenReveal = ({ roundData, resetGame, onBack }) => {
+            const impostorNames = roundData.players.filter(p => roundData.impostorIds.has(p.id)).map(p => p.name);
+            return (
+                <motion.div {...pageTransition} className="flex flex-col h-full w-full max-w-md mx-auto relative px-4 items-center justify-center text-center overflow-hidden">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="absolute top-4 left-4 z-50 p-2 text-neutral-400">
+                        <IconArrowLeft size={24}/>
+                    </motion.button>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full px-2">
+                        <span className="text-sm font-bold text-danger uppercase tracking-wider mb-8 block">Fim de Jogo</span>
+                        <div className="mb-10">
+                            <span className="text-sm font-bold text-neutral-500 uppercase tracking-wider block mb-4">Impostor{impostorNames.length > 1 ? 'es' : ''}</span>
+                            <div className="space-y-2">
+                                {impostorNames.map((name, idx) => (
+                                    <motion.div key={name} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 + (idx * 0.08) }} className="text-3xl font-black text-white">{name}</motion.div>
+                                ))}
+                            </div>
+                        </div>
+                        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }} className="glass-panel p-5 rounded-2xl w-full max-w-[280px] mx-auto">
+                            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider block mb-2">Palavra</span>
+                            <p className="text-2xl font-bold text-success">{roundData.word}</p>
+                        </motion.div>
+                    </motion.div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 safe-area-bottom">
+                        <Button onClick={resetGame} variant="primary">Jogar Novamente</Button>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        // --- Main App ---
+        const App = () => {
+            const [players, setPlayers] = useState([ { id: 1, name: 'Jogador 1' }, { id: 2, name: 'Jogador 2' }, { id: 3, name: 'Jogador 3' } ]);
+            const [impostorCount, setImpostorCount] = useState(1);
+            const [useHints, setUseHints] = useState(false);
+            const [gameState, setGameState] = useState('SETUP'); 
+            const [roundData, setRoundData] = useState(null);
+            const [viewingPlayer, setViewingPlayer] = useState(null);
+            const [viewedPlayers, setViewedPlayers] = useState(new Set());
+
+            // Ensure impostor count doesn't exceed players - 1
+            const validPlayers = players.filter(p => p.name.trim() !== '');
+            const maxImpostors = Math.max(1, validPlayers.length - 1);
+            const actualImpostorCount = Math.min(impostorCount, maxImpostors);
+
+            const startRound = () => {
+                if (validPlayers.length < 3) return;
+                
+                const catIndex = Math.floor(Math.random() * GAME_DATA.length);
+                const categoryData = GAME_DATA[catIndex];
+                const itemIndex = Math.floor(Math.random() * categoryData.items.length);
+                const selectedItem = categoryData.items[itemIndex];
+                const selectedHint = selectedItem.hints[Math.floor(Math.random() * selectedItem.hints.length)];
+                const shuffledIds = [...validPlayers].map(p => p.id).sort(() => 0.5 - Math.random());
+                const finalImpostorCount = Math.min(actualImpostorCount, validPlayers.length - 1);
+                const impostorIds = new Set(shuffledIds.slice(0, finalImpostorCount));
+                
+                setRoundData({
+                    category: categoryData.category,
+                    word: selectedItem.word,
+                    hint: selectedHint,
+                    impostorIds: impostorIds,
+                    startingPlayerId: shuffledIds[Math.floor(Math.random() * shuffledIds.length)],
+                    players: validPlayers
+                });
+                setViewedPlayers(new Set());
+                setGameState('DISTRIBUTE');
+            };
+
+            const initiateCardView = (player) => {
+                if (viewedPlayers.has(player.id)) return;
+                setViewingPlayer(player);
+                setGameState('CARD_VIEW');
+            };
+
+            const finishViewingCard = () => {
+                const newViewed = new Set(viewedPlayers);
+                newViewed.add(viewingPlayer.id);
+                setViewedPlayers(newViewed);
+                setViewingPlayer(null);
+                setGameState('DISTRIBUTE');
+            };
+
+            const resetGame = () => {
+                setRoundData(null);
+                setViewingPlayer(null);
+                setViewedPlayers(new Set());
+                setGameState('SETUP');
+            };
+            
+            const goBack = () => setGameState('SETUP');
+
+            return (
+                <div className="w-full h-full relative overflow-hidden bg-background text-white font-sans antialiased">
+                    <AnimatePresence mode="wait">
+                        {gameState === 'SETUP' && (
+                            <ScreenSetup key="setup" 
+                                players={players} setPlayers={setPlayers}
+                                impostorCount={impostorCount} setImpostorCount={setImpostorCount}
+                                useHints={useHints} setUseHints={setUseHints} 
+                                startRound={startRound}
+                            />
+                        )}
+                        {gameState === 'DISTRIBUTE' && (
+                            <ScreenDistribute key="distribute" roundData={roundData} viewedPlayers={viewedPlayers} initiateCardView={initiateCardView} setGameState={setGameState} onBack={goBack} />
+                        )}
+                        {gameState === 'CARD_VIEW' && viewingPlayer && (
+                            <ScreenCardView key="cardview" viewingPlayer={viewingPlayer} roundData={roundData} viewedPlayers={viewedPlayers} useHints={useHints} finishViewingCard={finishViewingCard} onBack={() => setGameState('DISTRIBUTE')} />
+                        )}
+                        {gameState === 'READY' && (
+                            <ScreenReady key="ready" roundData={roundData} setGameState={setGameState} onBack={() => setGameState('DISTRIBUTE')} />
+                        )}
+                        {gameState === 'PLAYING' && (
+                            <ScreenPlaying key="playing" roundData={roundData} setGameState={setGameState} onBack={() => setGameState('READY')} />
+                        )}
+                        {gameState === 'REVEAL' && (
+                            <ScreenReveal key="reveal" roundData={roundData} resetGame={resetGame} onBack={() => setGameState('PLAYING')} />
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
